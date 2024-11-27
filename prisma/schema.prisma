@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = "sqlserver://SQL6033.site4now.net:1433;database=db_aaec37_bigo;user=db_aaec37_bigo_admin;password=OgixDigital.123;encrypt=true;trustServerCertificate=true"
+}
+
+model User {
+  id                String         @id @default(cuid())
+  email             String         @unique
+  name              String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  stories           Story[]
+  tasks             Task[]
+  messages          Message[]
+  teams             Team[]         @relation("TeamMembers")
+  ownedTeams        Team[]
+  comments          Comment[]
+  likes             Like[]
+  ownedStorytellings Storytelling[] @relation("OwnedStorytellings")
+  memberStorytellings Storytelling[] @relation("MemberStorytellings")
+}
+
+model Storytelling {
+  id        String   @id @default(cuid())
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  owner     User     @relation("OwnedStorytellings", fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ownerId   String
+  members   User[]   @relation("MemberStorytellings")
+  stories   Story[]
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  teamId    String
+}
+
+model Story {
+  id             String       @id @default(cuid())
+  title          String
+  content        String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  author         User         @relation(fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  authorId       String
+  team           Team         @relation(fields: [teamId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  teamId         String
+  storytelling   Storytelling @relation(fields: [storytellingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  storytellingId String
+  tasks          Task[]
+  comments       Comment[]
+  likes          Like[]
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  assignee    User     @relation(fields: [assigneeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  assigneeId  String
+  story       Story    @relation(fields: [storyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  storyId     String
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  senderId  String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  teamId    String
+}
+
+model Team {
+  id            String         @id @default(cuid())
+  name          String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  owner         User           @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ownerId       String
+  members       User[]         @relation("TeamMembers")
+  stories       Story[]
+  messages      Message[]
+  storytellings Storytelling[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  authorId  String
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  storyId   String
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  userId    String
+  story     Story    @relation(fields: [storyId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  storyId   String
+
+  @@unique([userId, storyId])
+}
