@@ -1,10 +1,9 @@
-import Layout from "@/components/Layout";
 import Storytelling from "@/components/Storytelling";
 
 export default function StorytellingPage() {
   return (
-    <Layout>
+    <main className="flex-1">
       <Storytelling />
-    </Layout>
+    </main>
   );
 }
