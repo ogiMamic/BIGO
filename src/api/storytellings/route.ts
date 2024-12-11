@@ -1,72 +1,54 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
-import { getAuth } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs";
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
-// Create a single PrismaClient instance and reuse it
-const prisma = new PrismaClient();
-
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export async function GET() {
   try {
-    const { userId } = getAuth(req);
+    const { userId } = auth();
 
     if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    // Ensure user exists in the database
-    const user = await prisma.user.upsert({
-      where: { id: userId },
-      update: {},
-      create: {
-        id: userId,
-        name: "User", // You might want to get this from Clerk
-        email: "user@example.com", // You might want to get this from Clerk
+    const storytellings = await prisma.storytelling.findMany({
+      where: {
+        userId: userId,
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
 
-    if (req.method === "GET") {
-      const storytellings = await prisma.storytelling.findMany({
-        where: {
-          OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
-        },
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          title: true,
-          createdAt: true,
-        },
-      });
+    return NextResponse.json(storytellings);
+  } catch (error) {
+    console.error("Error in GET /api/storytellings:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
+}
 
-      return res.status(200).json(storytellings);
-    } else if (req.method === "POST") {
-      const { title } = req.body;
-
-      if (!title) {
-        return res.status(400).json({ error: "Title is required" });
-      }
-
-      const newStorytelling = await prisma.storytelling.create({
-        data: {
-          title,
-          owner: { connect: { id: userId } },
-          members: { connect: { id: userId } },
-        },
-        select: {
-          id: true,
-          title: true,
-          createdAt: true,
-        },
-      });
-
-      return res.status(201).json(newStorytelling);
+export async function POST(req: Request) {
+  try {
+    const { userId } = auth();
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    return res.status(405).json({ error: "Method not allowed" });
+    const { title } = await req.json();
+
+    if (!title) {
+      return new NextResponse("Title is required", { status: 400 });
+    }
+
+    const storytelling = await prisma.storytelling.create({
+      data: {
+        title,
+        userId,
+      },
+    });
+
+    return NextResponse.json(storytelling);
   } catch (error) {
-    console.error("API Error:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error("Error in POST /api/storytellings:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

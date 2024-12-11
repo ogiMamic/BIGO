@@ -1,111 +1,83 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
-import { getAuth } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs";
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 
-const prisma = new PrismaClient();
+export async function GET(req: Request) {
+  try {
+    const { userId } = auth();
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const { userId } = getAuth(req);
+    const { searchParams } = new URL(req.url);
+    const storytellingId = searchParams.get("storytellingId");
 
-  if (!userId) {
-    return res.status(401).json({ error: "Unauthorized" });
+    if (!storytellingId) {
+      return new NextResponse("Storytelling ID is required", { status: 400 });
+    }
+
+    const stories = await prisma.story.findMany({
+      where: {
+        storytellingId,
+        userId,
+      },
+      include: {
+        author: true,
+        comments: {
+          include: {
+            author: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return NextResponse.json(stories);
+  } catch (error) {
+    console.error("Error in GET /api/stories:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
+}
 
-  if (req.method === "GET") {
-    try {
-      const { storytellingId } = req.query;
-
-      if (!storytellingId || typeof storytellingId !== "string") {
-        return res.status(400).json({ error: "Storytelling ID is required" });
-      }
-
-      const stories = await prisma.story.findMany({
-        where: {
-          storytellingId: storytellingId,
-          storytelling: {
-            OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          comments: {
-            include: {
-              author: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-            orderBy: { createdAt: "asc" },
-          },
-          likes: {
-            where: {
-              userId: userId,
-            },
-          },
-        },
-      });
-
-      const storiesWithLikeInfo = stories.map((story) => ({
-        ...story,
-        likes: story.likes.length,
-        isLikedByUser: story.likes.length > 0,
-      }));
-
-      res.status(200).json(storiesWithLikeInfo);
-    } catch (error) {
-      console.error("Error fetching stories:", error);
-      res.status(500).json({ error: "Error fetching stories" });
+export async function POST(req: Request) {
+  try {
+    const { userId } = auth();
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
     }
-  } else if (req.method === "POST") {
-    try {
-      const { title, content, storytellingId } = req.body;
 
-      if (!title || !content || !storytellingId) {
-        return res
-          .status(400)
-          .json({ error: "Title, content, and storytellingId are required" });
-      }
+    const { title, content, storytellingId } = await req.json();
 
-      const newStory = await prisma.story.create({
-        data: {
-          title,
-          content,
-          author: { connect: { id: userId } },
-          storytelling: { connect: { id: storytellingId } },
-        },
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          comments: true,
-        },
-      });
-
-      res.status(201).json({
-        ...newStory,
-        likes: 0,
-        isLikedByUser: false,
-      });
-    } catch (error) {
-      console.error("Error creating story:", error);
-      res.status(500).json({ error: "Error creating story" });
+    if (!title || !content || !storytellingId) {
+      return new NextResponse("Missing required fields", { status: 400 });
     }
-  } else {
-    res.setHeader("Allow", ["GET", "POST"]);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+
+    const story = await prisma.story.create({
+      data: {
+        title,
+        content,
+        storytellingId,
+        userId,
+        authorId: userId,
+      },
+      include: {
+        author: true,
+        comments: {
+          include: {
+            author: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(story);
+  } catch (error) {
+    console.error("Error in POST /api/stories:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

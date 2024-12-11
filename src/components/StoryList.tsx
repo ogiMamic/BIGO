@@ -1,24 +1,11 @@
-import { StoryCard } from "./StoryCard";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Story {
   id: string;
   title: string;
   content: string;
   author: {
-    id: string;
-    name: string;
-  };
-  createdAt: string;
-  likes: number;
-  comments: Comment[];
-  isLikedByUser: boolean;
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  author: {
-    id: string;
     name: string;
   };
   createdAt: string;
@@ -26,28 +13,30 @@ interface Comment {
 
 interface StoryListProps {
   stories: Story[];
-  onDeleteStory: (id: string) => void;
-  onLikeStory: (id: string, newLikeCount: number, isLiked: boolean) => void;
-  onCommentStory: (id: string, content: string) => void;
 }
 
-export default function StoryList({
-  stories,
-  onDeleteStory,
-  onLikeStory,
-  onCommentStory,
-}: StoryListProps) {
+export default function StoryList({ stories }: StoryListProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {stories.map((story) => (
-        <StoryCard
-          key={story.id}
-          story={story}
-          onDelete={onDeleteStory}
-          onLike={onLikeStory}
-          onComment={onCommentStory}
-        />
-      ))}
-    </div>
+    <ScrollArea className="flex-1 p-4">
+      <div className="space-y-4">
+        {stories.map((story) => (
+          <div key={story.id} className="bg-gray-800 rounded-xl p-4 shadow-md">
+            <div className="flex items-center space-x-2 mb-2">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="/placeholder.svg" alt={story.author.name} />
+                <AvatarFallback>{story.author.name[0]}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold">{story.author.name}</p>
+                <p className="text-xs text-gray-400">
+                  {new Date(story.createdAt).toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <p className="text-sm">{story.content}</p>
+          </div>
+        ))}
+      </div>
+    </ScrollArea>
   );
 }

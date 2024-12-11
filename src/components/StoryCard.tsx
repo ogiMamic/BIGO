@@ -9,14 +9,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Heart, Trash2 } from "lucide-react";
+import { MessageSquare, ThumbsUp, Trash2 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
 
 interface Comment {
   id: string;
   content: string;
   author: {
-    id: string;
     name: string;
   };
   createdAt: string;
@@ -34,10 +34,9 @@ interface StoryCardProps {
     createdAt: string;
     likes: number;
     comments: Comment[];
-    isLikedByUser: boolean;
   };
   onDelete: (id: string) => void;
-  onLike: (id: string, newLikeCount: number, isLiked: boolean) => void;
+  onLike: (id: string, newLikeCount: number) => void;
   onComment: (id: string, content: string) => void;
 }
 
@@ -57,19 +56,44 @@ export function StoryCard({
     }
   };
 
-  const handleLike = () => {
-    onLike(
-      story.id,
-      story.likes + (story.isLikedByUser ? -1 : 1),
-      !story.isLikedByUser
-    );
+  const handleLike = async () => {
+    try {
+      const response = await fetch(`/api/stories/${story.id}/like`, {
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to like story");
+      }
+      const data = await response.json();
+      onLike(story.id, data.likeCount);
+    } catch (error) {
+      console.error("Error liking story:", error);
+      toast.error("Failed to like the story. Please try again.");
+    }
   };
 
-  const handleComment = (e: React.FormEvent) => {
+  const handleComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (commentContent.trim()) {
-      onComment(story.id, commentContent.trim());
-      setCommentContent("");
+      try {
+        const response = await fetch(`/api/stories/${story.id}/comments`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ content: commentContent }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to add comment");
+        }
+        const newComment = await response.json();
+        onComment(story.id, commentContent);
+        setCommentContent("");
+        toast.success("Comment added successfully!");
+      } catch (error) {
+        console.error("Error adding comment:", error);
+        toast.error("Failed to add comment. Please try again.");
+      }
     }
   };
 
@@ -96,10 +120,10 @@ export function StoryCard({
         </div>
         {user?.id === story.author.id && (
           <Button
-            variant="destructive"
+            variant="ghost"
             size="icon"
             onClick={handleDelete}
-            className="rounded-full p-1"
+            className="text-red-500 hover:text-red-600 hover:bg-gray-700 rounded-full p-1"
           >
             <Trash2 className="h-4 w-4" />
             <span className="sr-only">Delete story</span>
@@ -114,15 +138,9 @@ export function StoryCard({
           <Button
             variant="ghost"
             onClick={handleLike}
-            className={`text-xs ${
-              story.isLikedByUser ? "text-red-500" : "text-gray-400"
-            } hover:text-red-500 rounded-lg p-1`}
+            className="text-xs text-gray-400 hover:text-green-500 rounded-lg p-1"
           >
-            <Heart
-              className={`mr-1 h-3 w-3 ${
-                story.isLikedByUser ? "fill-current" : ""
-              }`}
-            />
+            <ThumbsUp className="mr-1 h-3 w-3" />
             {story.likes}
           </Button>
           <Button

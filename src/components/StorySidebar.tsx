@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function StorySidebar() {
   return (
-    <div className="w-64 border-r border-gray-700 flex flex-col bg-gray-900">
+    <div className="w-64 border-r border-gray-700 flex flex-col bg-gray-800 rounded-l-2xl">
       <div className="p-4">
         <div className="flex items-center space-x-2 mb-4">
           <h2 className="text-lg font-semibold text-green-500">

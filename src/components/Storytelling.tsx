@@ -1,355 +1,243 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
-import { toast, Toaster } from "sonner";
-import StorySidebar from "./StorySidebar";
-import StoryList from "./StoryList";
-import CreateStoryModal from "./CreateStoryModal";
-import CreateStorytellingModal from "./CreateStorytellingModal";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, RefreshCcw } from "lucide-react";
+import { MessageSquare, Send, ChevronDown } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface Storytelling {
-  id: string;
-  title: string;
-  createdAt: string;
-}
+const initialStories = [
+  {
+    id: 1,
+    title: "Liquidität",
+    author: "Andreas Wolf",
+    department: "Finance",
+    content: "Update on our current liquidity situation...",
+    comments: [
+      {
+        id: 1,
+        author: "Lisa Wagner",
+        content: "Great update, thanks for sharing!",
+        timestamp: "2023-06-10T10:30:00Z",
+      },
+      {
+        id: 2,
+        author: "Jerzy Wierzy",
+        content: "Can we discuss this further in the next meeting?",
+        timestamp: "2023-06-10T11:15:00Z",
+      },
+    ],
+    stream: "Finance",
+  },
+  {
+    id: 2,
+    title: "Q3 Marketing Campaign",
+    author: "Lisa Wagner",
+    department: "Marketing",
+    content: "Here's our performance chart for Q3...",
+    comments: [
+      {
+        id: 1,
+        author: "Dominik Lamakani",
+        content: "The results look promising!",
+        timestamp: "2023-06-11T09:00:00Z",
+      },
+    ],
+    stream: "Marketing",
+  },
+  {
+    id: 3,
+    title: "New Product Launch",
+    author: "Tisha Yanchev",
+    department: "Sales",
+    content: "Exciting news! We're launching our new product next month...",
+    comments: [],
+    stream: "Sales",
+  },
+];
 
-interface Story {
-  id: string;
-  title: string;
-  content: string;
-  author: {
-    id: string;
-    name: string;
-  };
-  createdAt: string;
-  likes: number;
-  comments: Comment[];
-  isLikedByUser: boolean;
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  author: {
-    id: string;
-    name: string;
-  };
-  createdAt: string;
-}
+const streams = ["Alle", "Finance", "Marketing", "Sales", "Lager & Logistik"];
 
 export default function Storytelling() {
-  const { user } = useUser();
-  const [storytellings, setStorytellings] = useState<Storytelling[]>([]);
-  const [selectedStorytelling, setSelectedStorytelling] = useState<
-    string | null
-  >(null);
-  const [stories, setStories] = useState<Story[]>([]);
-  const [isCreateStoryModalOpen, setIsCreateStoryModalOpen] = useState(false);
-  const [isCreateStorytellingModalOpen, setIsCreateStorytellingModalOpen] =
-    useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [activeStream, setActiveStream] = useState("Alle");
+  const [stories, setStories] = useState(initialStories);
+  const [newStory, setNewStory] = useState("");
+  const [newComments, setNewComments] = useState({});
 
-  useEffect(() => {
-    if (user) {
-      fetchStorytellings();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (selectedStorytelling) {
-      fetchStories(selectedStorytelling);
-    }
-  }, [selectedStorytelling]);
-
-  const fetchStorytellings = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const response = await fetch("/api/storytellings");
-      if (!response.ok) {
-        throw new Error("Failed to fetch storytellings");
-      }
-      const data = await response.json();
-      setStorytellings(data);
-      if (data.length > 0) {
-        setSelectedStorytelling(data[0].id);
-      }
-    } catch (error) {
-      console.error("Error fetching storytellings:", error);
-      setError("Failed to fetch storytellings. Please try again.");
-      toast.error("Failed to fetch storytellings. Please try again.", {
-        style: { background: "#333", color: "#fff" },
-      });
-    } finally {
-      setIsLoading(false);
+  const handleNewStory = () => {
+    if (newStory.trim()) {
+      const newStoryObj = {
+        id: stories.length + 1,
+        title: newStory,
+        author: "Current User",
+        department: "Your Department",
+        content: newStory,
+        comments: [],
+        stream: activeStream === "Alle" ? "General" : activeStream,
+      };
+      setStories([newStoryObj, ...stories]);
+      setNewStory("");
     }
   };
 
-  const fetchStories = async (storytellingId: string) => {
-    try {
-      setIsLoading(true);
-      const response = await fetch(
-        `/api/stories?storytellingId=${storytellingId}`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch stories");
-      }
-      const data = await response.json();
-      setStories(data);
-    } catch (error) {
-      console.error("Error fetching stories:", error);
-      toast.error("Failed to fetch stories. Please try again.", {
-        style: { background: "#333", color: "#fff" },
+  const handleNewComment = (storyId) => {
+    if (newComments[storyId]?.trim()) {
+      const updatedStories = stories.map((story) => {
+        if (story.id === storyId) {
+          return {
+            ...story,
+            comments: [
+              ...story.comments,
+              {
+                id: story.comments.length + 1,
+                author: "Current User",
+                content: newComments[storyId],
+                timestamp: new Date().toISOString(),
+              },
+            ],
+          };
+        }
+        return story;
       });
-    } finally {
-      setIsLoading(false);
+      setStories(updatedStories);
+      setNewComments({ ...newComments, [storyId]: "" });
     }
   };
 
-  const handleCreateStorytelling = async (title: string) => {
-    try {
-      const response = await fetch("/api/storytellings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ title }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create storytelling");
-      }
-
-      const newStorytelling = await response.json();
-      setStorytellings((prev) => [...prev, newStorytelling]);
-      setSelectedStorytelling(newStorytelling.id);
-      setIsCreateStorytellingModalOpen(false);
-      toast.success("Storytelling created successfully!", {
-        style: { background: "#333", color: "#fff" },
-      });
-    } catch (error) {
-      console.error("Error creating storytelling:", error);
-      toast.error("Failed to create storytelling. Please try again.", {
-        style: { background: "#333", color: "#fff" },
-      });
-    }
-  };
-
-  const handleCreateStory = async (title: string, content: string) => {
-    if (!title.trim() || !content.trim() || !user || !selectedStorytelling) {
-      toast.error(
-        "Please enter a title and content for your story, ensure you're logged in, and a storytelling is selected.",
-        { style: { background: "#333", color: "#fff" } }
-      );
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/stories", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title,
-          content,
-          storytellingId: selectedStorytelling,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create story");
-      }
-
-      const newStory = await response.json();
-      setStories((prevStories) => [newStory, ...prevStories]);
-      setIsCreateStoryModalOpen(false);
-      toast.success("Story created successfully!", {
-        style: { background: "#333", color: "#fff" },
-      });
-    } catch (error) {
-      console.error("Error creating story:", error);
-      toast.error(
-        `Failed to create story: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
-        { style: { background: "#333", color: "#fff" } }
-      );
-    }
-  };
-
-  const handleDeleteStory = async (storyId: string) => {
-    try {
-      const response = await fetch(`/api/stories/${storyId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete story");
-      }
-
-      setStories((prevStories) =>
-        prevStories.filter((story) => story.id !== storyId)
-      );
-      toast.success("Story deleted successfully", {
-        style: { background: "#333", color: "#fff" },
-      });
-    } catch (error) {
-      console.error("Error deleting story:", error);
-      toast.error("Failed to delete story. Please try again.", {
-        style: { background: "#333", color: "#fff" },
-      });
-    }
-  };
-
-  const handleLikeStory = (
-    storyId: string,
-    newLikeCount: number,
-    isLiked: boolean
-  ) => {
-    setStories((prevStories) =>
-      prevStories.map((story) =>
-        story.id === storyId
-          ? { ...story, likes: newLikeCount, isLikedByUser: isLiked }
-          : story
-      )
-    );
-  };
-
-  const handleCommentStory = async (storyId: string, content: string) => {
-    try {
-      const response = await fetch(`/api/stories/${storyId}/comments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ content }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to add comment");
-      }
-
-      const newComment = await response.json();
-      setStories((prevStories) =>
-        prevStories.map((story) =>
-          story.id === storyId
-            ? { ...story, comments: [...story.comments, newComment] }
-            : story
-        )
-      );
-    } catch (error) {
-      console.error("Error adding comment:", error);
-      toast.error("Failed to add comment. Please try again.", {
-        style: { background: "#333", color: "#fff" },
-      });
-    }
-  };
-
-  if (!user) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-900 text-white">
-        <p className="bg-gray-800 p-4 rounded-lg">
-          Please sign in to access Storytelling.
-        </p>
-      </div>
-    );
-  }
+  const filteredStories =
+    activeStream === "Alle"
+      ? stories
+      : stories.filter((story) => story.stream === activeStream);
 
   return (
-    <div className="flex h-screen bg-gray-900 text-white overflow-hidden">
-      <Toaster />
-      <StorySidebar>
-        <div className="space-y-2 p-4">
-          <Button
-            onClick={() => setIsCreateStorytellingModalOpen(true)}
-            className="w-full bg-green-500 hover:bg-green-600 text-white rounded-lg flex items-center justify-center"
-          >
-            <PlusCircle className="h-5 w-5 mr-2" />
-            New Storytelling
-          </Button>
-          {storytellings.map((storytelling) => (
-            <Button
-              key={storytelling.id}
-              onClick={() => setSelectedStorytelling(storytelling.id)}
-              className={`w-full text-left ${
-                selectedStorytelling === storytelling.id
-                  ? "bg-gray-700"
-                  : "bg-gray-800"
-              } hover:bg-gray-700`}
-            >
-              {storytelling.title}
-            </Button>
-          ))}
-          {error && (
-            <Button
-              onClick={fetchStorytellings}
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white rounded-lg flex items-center justify-center"
-            >
-              <RefreshCcw className="h-5 w-5 mr-2" />
-              Retry
-            </Button>
-          )}
-        </div>
-      </StorySidebar>
-      <div className="flex-1 flex flex-col bg-gray-800 p-4 rounded-lg overflow-hidden">
-        <div className="mb-4 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-green-500 bg-gray-700 px-3 py-1 rounded-lg">
-            {selectedStorytelling
-              ? storytellings.find((s) => s.id === selectedStorytelling)
-                  ?.title || "Stories"
-              : "Select a Storytelling"}
-          </h2>
-          <Button
-            onClick={() => setIsCreateStoryModalOpen(true)}
-            className="bg-green-500 hover:bg-green-600 text-white rounded-lg flex items-center"
-            disabled={!selectedStorytelling}
-          >
-            <PlusCircle className="h-5 w-5 mr-2" />
-            New Story
-          </Button>
-        </div>
-
-        {isLoading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-gray-400 bg-gray-700 p-4 rounded-lg">
-              Loading...
-            </p>
-          </div>
-        ) : stories.length > 0 ? (
-          <div className="flex-1 overflow-y-auto pr-2">
-            <StoryList
-              stories={stories}
-              onDeleteStory={handleDeleteStory}
-              onLikeStory={handleLikeStory}
-              onCommentStory={handleCommentStory}
+    <div className="flex-1 flex-col h-screen bg-gray-900 text-white">
+      <header className="p-4 bg-gray-800 rounded-b-2xl shadow-md">
+        <h1 className="text-2xl font-bold text-green-500">STORYTELLING</h1>
+      </header>
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="p-4 flex justify-between items-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="bg-gray-700 text-white border-gray-600 rounded-full"
+              >
+                {activeStream} <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-gray-700 text-white border-gray-600 rounded-xl">
+              {streams.map((stream) => (
+                <DropdownMenuItem
+                  key={stream}
+                  onSelect={() => setActiveStream(stream)}
+                  className="hover:bg-gray-600 rounded-lg"
+                >
+                  {stream}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <div className="flex-1 ml-4 flex items-center space-x-2">
+            <Input
+              type="text"
+              placeholder="Share a story..."
+              value={newStory}
+              onChange={(e) => setNewStory(e.target.value)}
+              className="flex-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400 rounded-full focus:ring-2 focus:ring-green-500"
             />
+            <Button
+              onClick={handleNewStory}
+              className="bg-green-500 hover:bg-green-600 text-white rounded-full px-4"
+            >
+              <Send className="h-5 w-5 mr-2" />
+              Share
+            </Button>
           </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-gray-400 bg-gray-700 p-4 rounded-lg">
-              No stories found. Create a new story to get started!
-            </p>
+        </div>
+        <ScrollArea className="flex-1 px-4">
+          <div className="space-y-4 pb-4">
+            {filteredStories.map((story) => (
+              <Card
+                key={story.id}
+                className="bg-gray-800 border-gray-700 rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300"
+              >
+                <CardHeader className="flex flex-row items-center space-x-4">
+                  <Avatar className="w-12 h-12">
+                    <AvatarImage
+                      src={`https://api.dicebear.com/6.x/initials/svg?seed=${story.author}`}
+                    />
+                    <AvatarFallback>{story.author[0]}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <CardTitle className="text-green-500">
+                      {story.title}
+                    </CardTitle>
+                    <p className="text-sm text-gray-400">
+                      {story.author} | {story.department}
+                    </p>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-300 mb-4">{story.content}</p>
+                  <div className="space-y-2">
+                    {story.comments.map((comment) => (
+                      <div
+                        key={comment.id}
+                        className="bg-gray-700 p-3 rounded-xl"
+                      >
+                        <div className="flex items-center space-x-2 mb-1">
+                          <Avatar className="w-6 h-6">
+                            <AvatarImage
+                              src={`https://api.dicebear.com/6.x/initials/svg?seed=${comment.author}`}
+                            />
+                            <AvatarFallback>{comment.author[0]}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm font-semibold">
+                            {comment.author}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {new Date(comment.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-sm">{comment.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex items-center space-x-2">
+                    <Input
+                      type="text"
+                      placeholder="Add a comment..."
+                      value={newComments[story.id] || ""}
+                      onChange={(e) =>
+                        setNewComments({
+                          ...newComments,
+                          [story.id]: e.target.value,
+                        })
+                      }
+                      className="flex-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400 rounded-full focus:ring-2 focus:ring-green-500"
+                    />
+                    <Button
+                      onClick={() => handleNewComment(story.id)}
+                      className="bg-green-500 hover:bg-green-600 text-white rounded-full px-4"
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Comment
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        )}
+        </ScrollArea>
       </div>
-
-      <CreateStoryModal
-        isOpen={isCreateStoryModalOpen}
-        onClose={() => setIsCreateStoryModalOpen(false)}
-        onCreateStory={handleCreateStory}
-      />
-
-      <CreateStorytellingModal
-        isOpen={isCreateStorytellingModalOpen}
-        onClose={() => setIsCreateStorytellingModalOpen(false)}
-        onCreateStorytelling={handleCreateStorytelling}
-      />
     </div>
   );
 }
