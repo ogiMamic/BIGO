@@ -1,18 +1,32 @@
-import { auth } from "@clerk/nextjs";
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { getAuth } from "@clerk/nextjs/server";
+import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/lib/db";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const { userId } = getAuth(request);
+
+  if (!userId) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
   try {
-    const { userId } = auth();
-
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
     const storytellings = await prisma.storytelling.findMany({
       where: {
-        userId: userId,
+        OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -26,23 +40,42 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
+  const { userId } = getAuth(request);
+
+  if (!userId) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
   try {
-    const { userId } = auth();
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+    const { title, teamId } = await request.json();
 
-    const { title } = await req.json();
-
-    if (!title) {
-      return new NextResponse("Title is required", { status: 400 });
+    if (!title || !teamId) {
+      return new NextResponse("Title and teamId are required", { status: 400 });
     }
 
     const storytelling = await prisma.storytelling.create({
       data: {
         title,
-        userId,
+        ownerId: userId,
+        teamId,
+        members: {
+          connect: { id: userId },
+        },
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 

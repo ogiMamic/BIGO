@@ -1,34 +1,53 @@
-import { auth } from "@clerk/nextjs";
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { getAuth } from "@clerk/nextjs/server";
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
-export async function GET(req: Request) {
+const prisma = new PrismaClient();
+
+export async function GET(request: NextRequest) {
+  const { userId } = getAuth(request);
+  const { searchParams } = new URL(request.url);
+  const storytellingId = searchParams.get("storytellingId");
+
+  if (!userId) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
   try {
-    const { userId } = auth();
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const { searchParams } = new URL(req.url);
-    const storytellingId = searchParams.get("storytellingId");
-
-    if (!storytellingId) {
-      return new NextResponse("Storytelling ID is required", { status: 400 });
-    }
-
     const stories = await prisma.story.findMany({
       where: {
-        storytellingId,
-        userId,
+        storytellingId: storytellingId ?? undefined,
       },
       include: {
-        author: true,
+        author: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         comments: {
           include: {
-            author: true,
+            author: {
+              select: {
+                name: true,
+              },
+            },
           },
           orderBy: {
             createdAt: "desc",
+          },
+        },
+        likes: true,
+        team: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        storytelling: {
+          select: {
+            id: true,
+            title: true,
           },
         },
       },
@@ -37,47 +56,89 @@ export async function GET(req: Request) {
       },
     });
 
-    return NextResponse.json(stories);
+    const storiesWithLikeInfo = stories.map((story: any) => ({
+      ...story,
+      likes: story.likes.length,
+      isLikedByUser: story.likes.some((like: any) => like.userId === userId),
+    }));
+
+    return NextResponse.json(storiesWithLikeInfo);
   } catch (error) {
-    console.error("Error in GET /api/stories:", error);
+    console.error("[STORIES_GET]", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 
-export async function POST(req: Request) {
-  try {
-    const { userId } = auth();
-    if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+export async function POST(request: NextRequest) {
+  const { userId } = getAuth(request);
 
-    const { title, content, storytellingId } = await req.json();
+  if (!userId) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  try {
+    const { title, content, storytellingId } = await request.json();
 
     if (!title || !content || !storytellingId) {
       return new NextResponse("Missing required fields", { status: 400 });
+    }
+
+    const storytelling = await prisma.storytelling.findUnique({
+      where: { id: storytellingId },
+      include: { team: true },
+    });
+
+    if (!storytelling) {
+      return new NextResponse("Storytelling not found", { status: 404 });
     }
 
     const story = await prisma.story.create({
       data: {
         title,
         content,
-        storytellingId,
-        userId,
         authorId: userId,
+        storytellingId,
+        teamId: storytelling.teamId,
       },
       include: {
-        author: true,
+        author: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         comments: {
           include: {
-            author: true,
+            author: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        likes: true,
+        team: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        storytelling: {
+          select: {
+            id: true,
+            title: true,
           },
         },
       },
     });
 
-    return NextResponse.json(story);
+    return NextResponse.json({
+      ...story,
+      likes: 0,
+      isLikedByUser: false,
+    });
   } catch (error) {
-    console.error("Error in POST /api/stories:", error);
+    console.error("[STORIES_POST]", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

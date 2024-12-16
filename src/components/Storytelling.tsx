@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,109 +13,167 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 
-const initialStories = [
-  {
-    id: 1,
-    title: "Liquidität",
-    author: "Andreas Wolf",
-    department: "Finance",
-    content: "Update on our current liquidity situation...",
-    comments: [
-      {
-        id: 1,
-        author: "Lisa Wagner",
-        content: "Great update, thanks for sharing!",
-        timestamp: "2023-06-10T10:30:00Z",
-      },
-      {
-        id: 2,
-        author: "Jerzy Wierzy",
-        content: "Can we discuss this further in the next meeting?",
-        timestamp: "2023-06-10T11:15:00Z",
-      },
-    ],
-    stream: "Finance",
-  },
-  {
-    id: 2,
-    title: "Q3 Marketing Campaign",
-    author: "Lisa Wagner",
-    department: "Marketing",
-    content: "Here's our performance chart for Q3...",
-    comments: [
-      {
-        id: 1,
-        author: "Dominik Lamakani",
-        content: "The results look promising!",
-        timestamp: "2023-06-11T09:00:00Z",
-      },
-    ],
-    stream: "Marketing",
-  },
-  {
-    id: 3,
-    title: "New Product Launch",
-    author: "Tisha Yanchev",
-    department: "Sales",
-    content: "Exciting news! We're launching our new product next month...",
-    comments: [],
-    stream: "Sales",
-  },
-];
+interface Comment {
+  id: string;
+  author: {
+    name: string;
+  };
+  content: string;
+  createdAt: string;
+}
 
-const streams = ["Alle", "Finance", "Marketing", "Sales", "Lager & Logistik"];
+interface Story {
+  id: string;
+  title: string;
+  content: string;
+  author: {
+    id: string;
+    name: string;
+  };
+  createdAt: string;
+  comments: Comment[];
+  likes: number;
+  isLikedByUser: boolean;
+  team: {
+    id: string;
+    name: string;
+  };
+  storytelling: {
+    id: string;
+    title: string;
+  };
+}
+
+interface Team {
+  id: string;
+  name: string;
+}
+
+interface Storytelling {
+  id: string;
+  title: string;
+}
 
 export default function Storytelling() {
-  const [activeStream, setActiveStream] = useState("Alle");
-  const [stories, setStories] = useState(initialStories);
+  const [activeStorytellingId, setActiveStorytellingId] = useState<
+    string | null
+  >(null);
+  const [stories, setStories] = useState<Story[]>([]);
   const [newStory, setNewStory] = useState("");
-  const [newComments, setNewComments] = useState({});
+  const [newComments, setNewComments] = useState<{ [key: string]: string }>({});
+  const [storytellings, setStorytellings] = useState<Storytelling[]>([]);
 
-  const handleNewStory = () => {
-    if (newStory.trim()) {
-      const newStoryObj = {
-        id: stories.length + 1,
-        title: newStory,
-        author: "Current User",
-        department: "Your Department",
-        content: newStory,
-        comments: [],
-        stream: activeStream === "Alle" ? "General" : activeStream,
-      };
-      setStories([newStoryObj, ...stories]);
-      setNewStory("");
+  useEffect(() => {
+    fetchStorytellings();
+  }, []);
+
+  useEffect(() => {
+    if (activeStorytellingId) {
+      fetchStories(activeStorytellingId);
+    }
+  }, [activeStorytellingId]);
+
+  const fetchStorytellings = async () => {
+    try {
+      const response = await fetch("/api/storytellings");
+      if (!response.ok) {
+        throw new Error("Failed to fetch storytellings");
+      }
+      const data = await response.json();
+      setStorytellings(data);
+      if (data.length > 0) {
+        setActiveStorytellingId(data[0].id);
+      }
+    } catch (error) {
+      console.error("Error fetching storytellings:", error);
+      toast.error("Failed to fetch storytellings. Please try again later.");
     }
   };
 
-  const handleNewComment = (storyId) => {
-    if (newComments[storyId]?.trim()) {
-      const updatedStories = stories.map((story) => {
-        if (story.id === storyId) {
-          return {
-            ...story,
-            comments: [
-              ...story.comments,
-              {
-                id: story.comments.length + 1,
-                author: "Current User",
-                content: newComments[storyId],
-                timestamp: new Date().toISOString(),
-              },
-            ],
-          };
+  const fetchStories = async (storytellingId: string) => {
+    try {
+      const response = await fetch(
+        `/api/stories?storytellingId=${storytellingId}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch stories");
+      }
+      const data = await response.json();
+      setStories(data);
+    } catch (error) {
+      console.error("Error fetching stories:", error);
+      toast.error("Failed to fetch stories. Please try again later.");
+    }
+  };
+
+  const handleNewStory = async () => {
+    if (newStory.trim() && activeStorytellingId) {
+      try {
+        const response = await fetch("/api/stories", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: newStory,
+            content: newStory,
+            storytellingId: activeStorytellingId,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create story");
         }
-        return story;
-      });
-      setStories(updatedStories);
-      setNewComments({ ...newComments, [storyId]: "" });
+
+        const createdStory = await response.json();
+        setStories([createdStory, ...stories]);
+        setNewStory("");
+        toast.success("Your story has been shared.");
+      } catch (error) {
+        console.error("Error creating story:", error);
+        toast.error("Failed to create story. Please try again.");
+      }
     }
   };
 
-  const filteredStories =
-    activeStream === "Alle"
-      ? stories
-      : stories.filter((story) => story.stream === activeStream);
+  const handleNewComment = async (storyId: string) => {
+    if (newComments[storyId]?.trim()) {
+      try {
+        const response = await fetch(`/api/stories/${storyId}/comments`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: newComments[storyId],
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create comment");
+        }
+
+        const createdComment = await response.json();
+        const updatedStories = stories.map((story) => {
+          if (story.id === storyId) {
+            return {
+              ...story,
+              comments: [createdComment, ...story.comments],
+            };
+          }
+          return story;
+        });
+        setStories(updatedStories);
+        setNewComments({ ...newComments, [storyId]: "" });
+        toast.success("Your comment has been added.");
+      } catch (error) {
+        console.error("Error creating comment:", error);
+        toast.error("Failed to add comment. Please try again.");
+      }
+    }
+  };
 
   return (
     <div className="flex-1 flex-col h-screen bg-gray-900 text-white">
@@ -130,17 +188,19 @@ export default function Storytelling() {
                 variant="outline"
                 className="bg-gray-700 text-white border-gray-600 rounded-full"
               >
-                {activeStream} <ChevronDown className="ml-2 h-4 w-4" />
+                {storytellings.find((s) => s.id === activeStorytellingId)
+                  ?.title || "Select Storytelling"}{" "}
+                <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="bg-gray-700 text-white border-gray-600 rounded-xl">
-              {streams.map((stream) => (
+              {storytellings.map((storytelling) => (
                 <DropdownMenuItem
-                  key={stream}
-                  onSelect={() => setActiveStream(stream)}
+                  key={storytelling.id}
+                  onSelect={() => setActiveStorytellingId(storytelling.id)}
                   className="hover:bg-gray-600 rounded-lg"
                 >
-                  {stream}
+                  {storytelling.title}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -164,7 +224,7 @@ export default function Storytelling() {
         </div>
         <ScrollArea className="flex-1 px-4">
           <div className="space-y-4 pb-4">
-            {filteredStories.map((story) => (
+            {stories.map((story) => (
               <Card
                 key={story.id}
                 className="bg-gray-800 border-gray-700 rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300"
@@ -172,16 +232,16 @@ export default function Storytelling() {
                 <CardHeader className="flex flex-row items-center space-x-4">
                   <Avatar className="w-12 h-12">
                     <AvatarImage
-                      src={`https://api.dicebear.com/6.x/initials/svg?seed=${story.author}`}
+                      src={`https://api.dicebear.com/6.x/initials/svg?seed=${story.author.name}`}
                     />
-                    <AvatarFallback>{story.author[0]}</AvatarFallback>
+                    <AvatarFallback>{story.author.name[0]}</AvatarFallback>
                   </Avatar>
                   <div>
                     <CardTitle className="text-green-500">
                       {story.title}
                     </CardTitle>
                     <p className="text-sm text-gray-400">
-                      {story.author} | {story.department}
+                      {story.author.name} | {story.team.name}
                     </p>
                   </div>
                 </CardHeader>
@@ -196,15 +256,17 @@ export default function Storytelling() {
                         <div className="flex items-center space-x-2 mb-1">
                           <Avatar className="w-6 h-6">
                             <AvatarImage
-                              src={`https://api.dicebear.com/6.x/initials/svg?seed=${comment.author}`}
+                              src={`https://api.dicebear.com/6.x/initials/svg?seed=${comment.author.name}`}
                             />
-                            <AvatarFallback>{comment.author[0]}</AvatarFallback>
+                            <AvatarFallback>
+                              {comment.author.name[0]}
+                            </AvatarFallback>
                           </Avatar>
                           <span className="text-sm font-semibold">
-                            {comment.author}
+                            {comment.author.name}
                           </span>
                           <span className="text-xs text-gray-400">
-                            {new Date(comment.timestamp).toLocaleString()}
+                            {new Date(comment.createdAt).toLocaleString()}
                           </span>
                         </div>
                         <p className="text-sm">{comment.content}</p>
