@@ -1,12 +1,29 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { createClient } from '@/utils/supabase/middleware';
 
-export default clerkMiddleware();
+export async function middleware(request: NextRequest) {
+  const { supabase, response } = createClient(request);
+  
+  // Optional: Check auth state
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  // Your middleware logic here
+  
+  return response;
+}
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
-    "/(api|trpc)(.*)",
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public (public files)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|public).*)',
   ],
 };

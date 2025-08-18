@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
-import { createClient } from "@/utils/supabase/server";
+import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
@@ -10,23 +10,12 @@ export async function GET() {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    console.log("Fetching teams for user:", user.id);
-
-    const supabase = await createClient();
-
     // Find teams where the user is the owner
-    const { data: teams, error } = await supabase
-      .from("team")
-      .select("*")
-      .eq("owner_id", user.id);
-
-    if (error) {
-      console.error("Error fetching teams:", error);
-      return NextResponse.json(
-        { error: "Database error", details: error.message },
-        { status: 500 }
-      );
-    }
+    const teams = await prisma.team.findMany({
+      where: {
+        ownerId: user.id,
+      },
+    });
 
     return NextResponse.json(teams);
   } catch (error) {
@@ -61,22 +50,13 @@ export async function POST(req: Request) {
 
     console.log("Creating team with name:", name, "for user:", user.id);
 
-    const supabase = await createClient();
-
-    // Create a team with the current user as owner
-    const { data: team, error } = await supabase
-      .from("team")
-      .insert([{ name, owner_id: user.id }])
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error creating team:", error);
-      return NextResponse.json(
-        { error: "Database error", details: error.message },
-        { status: 500 }
-      );
-    }
+    // Create a team with the current user as owner only
+    const team = await prisma.team.create({
+      data: {
+        name,
+        ownerId: user.id,
+      },
+    });
 
     console.log("Team created successfully:", team);
     return NextResponse.json(team);
