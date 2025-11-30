@@ -1,32 +1,22 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { auth } from "@clerk/nextjs/server"
+import { prisma } from "@/lib/prisma"
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    console.log("[v0] GET /api/teams - Starting request")
-    const supabase = await createClient()
+    const { userId } = auth()
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    console.log("[v0] Current user:", user?.id || "No user")
-
-    if (authError || !user) {
-      console.log("[v0] GET /api/teams - Unauthorized: No user")
+    if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 })
     }
 
-    // Find teams where the user is the owner
-    const { data: teams, error } = await supabase.from("Team").select("*").eq("ownerId", user.id)
+    const teams = await prisma.team.findMany({
+      where: {
+        ownerId: userId,
+      },
+    })
 
-    if (error) {
-      console.error("[v0] GET /api/teams - Database error:", error)
-      return NextResponse.json({ error: "Failed to fetch teams", details: error.message }, { status: 500 })
-    }
-
-    console.log("[v0] GET /api/teams - Found teams:", teams?.length || 0)
-    return NextResponse.json(teams || [])
+    return NextResponse.json(teams)
   } catch (error) {
     console.error("[v0] GET /api/teams - Error:", error)
     return NextResponse.json(
@@ -41,65 +31,29 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    console.log("[v0] POST /api/teams - Starting request")
+    const { userId } = auth()
 
-    const supabase = await createClient()
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    console.log("[v0] Current user check:", {
-      hasUser: !!user,
-      userId: user?.id,
-      userEmail: user?.email,
-    })
-
-    if (authError || !user) {
-      console.log("[v0] POST /api/teams - Unauthorized: No user found")
+    if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 })
     }
 
     const body = await req.json()
-    console.log("[v0] Request body:", body)
     const { name } = body
 
     if (!name || typeof name !== "string") {
-      console.log("[v0] POST /api/teams - Invalid request: name validation failed")
-      return NextResponse.json({ error: "Invalid request: name is required and must be a string" }, { status: 400 })
+      return NextResponse.json({ error: "Invalid request: name is required" }, { status: 400 })
     }
 
-    console.log("[v0] Creating team with name:", name, "for user:", user.id)
-
-    // Create a team with the current user as owner
-    const { data: team, error } = await supabase
-      .from("Team")
-      .insert({
+    const team = await prisma.team.create({
+      data: {
         name,
-        ownerId: user.id,
-      })
-      .select()
-      .single()
+        ownerId: userId,
+      },
+    })
 
-    if (error) {
-      console.error("[v0] Database error details:", error)
-      return NextResponse.json(
-        {
-          error: "Failed to create team",
-          details: error.message,
-        },
-        { status: 500 },
-      )
-    }
-
-    console.log("[v0] Team created successfully:", team)
     return NextResponse.json(team)
   } catch (error) {
-    console.error("[v0] POST /api/teams - Unexpected error:", {
-      error,
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    })
+    console.error("[v0] POST /api/teams - Error:", error)
     return NextResponse.json(
       {
         error: "Failed to create team",
