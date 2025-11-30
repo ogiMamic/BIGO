@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import {
   MessageSquare,
   BookOpen,
@@ -10,19 +10,23 @@ import {
   CheckSquare,
   LogOut,
   LayoutDashboard,
-} from "lucide-react";
-import { UserButton } from "@clerk/nextjs";
+  TrendingUp,
+  Radio,
+} from "lucide-react"
+import { UserButton } from "@clerk/nextjs"
 
 export default function Sidebar() {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+    { name: "KPI", icon: TrendingUp, href: "/kpi" },
     { name: "Storytelling", icon: BookOpen, href: "/storytelling" },
+    { name: "Streams", icon: Radio, href: "/streams" },
     { name: "Messages", icon: MessageSquare, href: "/messages" },
     { name: "Teams", icon: Users, href: "/teams" },
     { name: "Tasks", icon: CheckSquare, href: "/tasks" },
-  ];
+  ]
 
   return (
     <aside className="w-64 bg-gray-800 border-r border-gray-700 h-screen flex flex-col">
@@ -39,9 +43,7 @@ export default function Sidebar() {
               <Link
                 href={item.href}
                 className={`flex items-center space-x-3 p-2 rounded-xl hover:bg-gray-700 ${
-                  pathname === item.href
-                    ? "bg-gray-700 text-green-500"
-                    : "text-gray-300"
+                  pathname === item.href ? "bg-gray-700 text-green-500" : "text-gray-300"
                 }`}
               >
                 <item.icon className="h-5 w-5" />
@@ -58,5 +60,5 @@ export default function Sidebar() {
         </Link>
       </div>
     </aside>
-  );
+  )
 }

@@ -130,6 +130,12 @@ export async function POST(req: Request) {
             email: true,
           },
         },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
       },
     })
 
