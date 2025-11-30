@@ -1,12 +1,13 @@
 "use client";
 
+import type React from "react";
+
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
 
 interface InitialTeamSetupProps {
   onTeamCreated: () => void;
@@ -18,7 +19,6 @@ export default function InitialTeamSetup({
   const [teamName, setTeamName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const supabase = createClient();
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,23 +27,34 @@ export default function InitialTeamSetup({
       setError(null);
 
       try {
-        // Using Supabase client directly instead of fetch API
-        const { data, error: supabaseError } = await supabase
-          .from("team") // Note: using "team" instead of "teams" to match our schema
-          .insert([{ name: teamName }])
-          .select()
-          .single();
+        console.log("[v0] Attempting to create team:", teamName);
 
-        if (supabaseError) {
-          throw new Error(supabaseError.message);
+        const response = await fetch("/api/teams", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name: teamName }),
+        });
+
+        console.log("[v0] Response status:", response.status);
+        console.log("[v0] Response ok:", response.ok);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.log("[v0] Error response data:", errorData);
+          throw new Error(errorData.error || "Failed to create team");
         }
+
+        const team = await response.json();
+        console.log("[v0] Team created successfully:", team);
 
         toast.success("Team created successfully!");
         onTeamCreated();
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Failed to create team";
-        console.error("Error creating team:", error);
+        console.error("[v0] Error creating team:", error);
         setError(errorMessage);
         toast.error(errorMessage);
       } finally {
@@ -53,7 +64,10 @@ export default function InitialTeamSetup({
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+    <div
+      className="flex items-center justify-center min-h-[calc(100vh-80px)]"
+      suppressHydrationWarning
+    >
       <Card className="w-full max-w-md bg-gray-800 text-white">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center text-green-500">

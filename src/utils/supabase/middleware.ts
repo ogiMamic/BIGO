@@ -1,11 +1,25 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export function createClient(request: NextRequest) {
+export async function createClient(request: NextRequest) {
+  // Resolve headers() if it's a function returning a Promise (Next.js v16+)
+  const rawHeaders = typeof (request as any).headers === "function" ? await (request as any).headers() : (request as any).headers
+  // Normalize Headers to a plain object (HeadersInit) to avoid runtime errors
+  let headers: Record<string, string> = {}
+  try {
+    if (rawHeaders && typeof (rawHeaders as any).entries === "function") {
+      headers = Object.fromEntries((rawHeaders as any).entries())
+    } else if (rawHeaders && typeof rawHeaders === "object") {
+      headers = Object.fromEntries(Object.entries(rawHeaders as any))
+    }
+  } catch (e) {
+    headers = {}
+  }
+
   // Create an unmodified response
   let response = NextResponse.next({
     request: {
-      headers: request.headers,
+      headers,
     },
   });
 
@@ -25,7 +39,7 @@ export function createClient(request: NextRequest) {
           });
           response = NextResponse.next({
             request: {
-              headers: request.headers,
+              headers,
             },
           });
           response.cookies.set({
@@ -41,7 +55,7 @@ export function createClient(request: NextRequest) {
           });
           response = NextResponse.next({
             request: {
-              headers: request.headers,
+              headers,
             },
           });
           response.cookies.delete({
