@@ -1,9 +1,11 @@
-import { SignUp } from "@clerk/nextjs";
+import { SignUp } from "@clerk/nextjs"
 
 export default function SignUpPage() {
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-900">
       <SignUp
+        fallbackRedirectUrl="/dashboard"
+        signInUrl="/sign-in"
         appearance={{
           elements: {
             rootBox: "mx-auto",
@@ -16,11 +18,7 @@ export default function SignUpPage() {
             footerActionLink: "text-green-500 hover:text-green-400",
           },
         }}
-        routing="path"
-        path="/sign-up"
-        signInUrl="/sign-in"
-        redirectUrl="/dashboard"
       />
     </div>
-  );
+  )
 }
