@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Heart, MessageCircle, Send } from "lucide-react"
+import { Heart, MessageCircle, Send, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { useUser } from "@clerk/nextjs"
 
@@ -148,6 +148,27 @@ export default function Storytelling() {
     }
   }
 
+  const handleDeleteStory = async (storyId: string) => {
+    if (!confirm("Are you sure you want to delete this story?")) return
+
+    try {
+      const response = await fetch(`/api/stories/${storyId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to delete story")
+      }
+
+      setStories(stories.filter((story) => story.id !== storyId))
+      toast.success("Story deleted successfully!")
+    } catch (error) {
+      console.error("[v0] Error deleting story:", error)
+      toast.error(error instanceof Error ? error.message : "Failed to delete story.")
+    }
+  }
+
   return (
     <div className="space-y-6 p-6">
       <Card className="bg-gray-800 border-gray-700">
@@ -191,6 +212,16 @@ export default function Storytelling() {
                     <p className="text-sm text-gray-400">{story.author.name || story.author.email}</p>
                   </div>
                 </div>
+                {user?.id === story.author.id && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteStory(story.id)}
+                    className="text-gray-400 hover:text-red-500"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>
