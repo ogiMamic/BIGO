@@ -26,6 +26,7 @@ import { useUser } from "@clerk/nextjs"
 interface Comment {
   id: string
   content: string
+  authorId: string // Added authorId for delete authorization
   author: {
     id: string
     name: string | null
@@ -178,6 +179,26 @@ export default function Storytelling() {
     }
   }
 
+  const handleDeleteComment = async (storyId: string, commentId: string) => {
+    try {
+      const response = await fetch(`/api/stories/${storyId}/comments/${commentId}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to delete comment")
+      }
+
+      await fetchComments(storyId)
+      await fetchStories()
+      toast.success("Comment deleted successfully!")
+    } catch (error) {
+      console.error("[v0] Error deleting comment:", error)
+      toast.error(error instanceof Error ? error.message : "Failed to delete comment.")
+    }
+  }
+
   return (
     <div className="space-y-6 p-6">
       <Card className="bg-gray-800 border-gray-700">
@@ -283,7 +304,41 @@ export default function Storytelling() {
                         <AvatarFallback>{comment.author.name?.[0] || "U"}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 bg-gray-700 rounded-lg p-2">
-                        <p className="text-xs text-gray-400">{comment.author.name || comment.author.email}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-gray-400">{comment.author.name || comment.author.email}</p>
+                          {user?.id === comment.authorId && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-gray-400 hover:text-red-500"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="bg-gray-800 border-gray-700">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-white">Delete Comment?</AlertDialogTitle>
+                                  <AlertDialogDescription className="text-gray-400">
+                                    This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className="bg-gray-700 text-white border-gray-600 hover:bg-gray-600">
+                                    Cancel
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteComment(story.id, comment.id)}
+                                    className="bg-red-600 text-white hover:bg-red-700"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
                         <p className="text-sm text-white">{comment.content}</p>
                       </div>
                     </div>
