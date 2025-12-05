@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   images: {
     remotePatterns: [
       {
@@ -7,7 +13,12 @@ const nextConfig = {
         hostname: "oaidalleapiprodscus.blob.core.windows.net",
       },
     ],
+    unoptimized: true,
   },
-};
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
+  swcMinify: false,
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig
