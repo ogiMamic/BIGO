@@ -63,6 +63,7 @@ export async function POST(req: Request) {
       update: {},
       create: {
         id: userId,
+        clerkId: userId,
         email: `${userId}@clerk.user`,
       },
     })

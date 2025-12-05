@@ -18,7 +18,8 @@ export async function GET(req: Request) {
       update: {},
       create: {
         id: userId,
-        email: `${userId}@clerk.user`, // Placeholder email
+        clerkId: userId,
+        email: `${userId}@clerk.user`,
       },
     })
 
@@ -77,6 +78,7 @@ export async function POST(req: Request) {
       update: {},
       create: {
         id: userId,
+        clerkId: userId,
         email: `${userId}@clerk.user`,
       },
     })

@@ -15,6 +15,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       update: {},
       create: {
         id: userId,
+        clerkId: userId,
         email: `${userId}@clerk.user`,
       },
     })
