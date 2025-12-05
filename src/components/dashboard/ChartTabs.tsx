@@ -1,7 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, LineChart } from "lucide-react";
-import { BarChartComponent, LineChartComponent } from "@/components/ui/chart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { BarChart, LineChart } from "lucide-react"
+import { BarChartComponent, LineChartComponent } from "@/components/ui/chart"
 
 export function ChartTabs() {
   return (
@@ -23,25 +22,11 @@ export function ChartTabs() {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="bar">
-        <Card className="bg-gray-800 border-gray-700 rounded-xl shadow-md">
-          <CardHeader>
-            <CardTitle className="text-green-500">Bar Chart</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BarChartComponent />
-          </CardContent>
-        </Card>
+        <BarChartComponent title="Monthly Revenue" description="Total revenue by month" />
       </TabsContent>
       <TabsContent value="line">
-        <Card className="bg-gray-800 border-gray-700 rounded-xl shadow-md">
-          <CardHeader>
-            <CardTitle className="text-green-500">Line Chart</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <LineChartComponent />
-          </CardContent>
-        </Card>
+        <LineChartComponent title="Revenue Trend" description="Revenue trend over time" />
       </TabsContent>
     </Tabs>
-  );
+  )
 }
