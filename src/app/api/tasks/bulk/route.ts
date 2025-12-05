@@ -11,11 +11,10 @@ export async function PUT(req: Request) {
     const { tasks } = await req.json()
 
     // Mock auto-save endpoint - in production this would update database
-    console.log("[v0] Auto-saving tasks:", tasks.length)
 
     return NextResponse.json({ success: true, savedCount: tasks.length })
   } catch (error) {
-    console.error("[v0] Error auto-saving tasks:", error)
+    console.error("Error auto-saving tasks:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

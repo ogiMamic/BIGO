@@ -1,86 +1,68 @@
-"use client";
+"use client"
 
-import type React from "react";
+import type React from "react"
 
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 
 interface InitialTeamSetupProps {
-  onTeamCreated: () => void;
+  onTeamCreated: () => void
 }
 
-export default function InitialTeamSetup({
-  onTeamCreated,
-}: InitialTeamSetupProps) {
-  const [teamName, setTeamName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default function InitialTeamSetup({ onTeamCreated }: InitialTeamSetupProps) {
+  const [teamName, setTeamName] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleCreateTeam = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (teamName.trim()) {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
 
       try {
-        console.log("[v0] Attempting to create team:", teamName);
-
         const response = await fetch("/api/teams", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ name: teamName }),
-        });
-
-        console.log("[v0] Response status:", response.status);
-        console.log("[v0] Response ok:", response.ok);
+        })
 
         if (!response.ok) {
-          const errorData = await response.json();
-          console.log("[v0] Error response data:", errorData);
-          throw new Error(errorData.error || "Failed to create team");
+          const errorData = await response.json()
+          throw new Error(errorData.error || "Failed to create team")
         }
 
-        const team = await response.json();
-        console.log("[v0] Team created successfully:", team);
+        const team = await response.json()
 
-        toast.success("Team created successfully!");
-        onTeamCreated();
+        toast.success("Team created successfully!")
+        onTeamCreated()
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Failed to create team";
-        console.error("[v0] Error creating team:", error);
-        setError(errorMessage);
-        toast.error(errorMessage);
+        const errorMessage = error instanceof Error ? error.message : "Failed to create team"
+        console.error("Error creating team:", error)
+        setError(errorMessage)
+        toast.error(errorMessage)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
-  };
+  }
 
   return (
-    <div
-      className="flex items-center justify-center min-h-[calc(100vh-80px)]"
-      suppressHydrationWarning
-    >
+    <div className="flex items-center justify-center min-h-[calc(100vh-80px)]" suppressHydrationWarning>
       <Card className="w-full max-w-md bg-gray-800 text-white">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center text-green-500">
-            Welcome to BIGO
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold text-center text-green-500">Welcome to BIGO</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleCreateTeam} className="space-y-4">
             <div>
-              <label
-                htmlFor="teamName"
-                className="block text-sm font-medium text-gray-300"
-              >
+              <label htmlFor="teamName" className="block text-sm font-medium text-gray-300">
                 Enter your team name to get started
               </label>
               <Input
@@ -95,9 +77,7 @@ export default function InitialTeamSetup({
               />
             </div>
 
-            {error && (
-              <div className="text-red-400 text-sm mt-2">Error: {error}</div>
-            )}
+            {error && <div className="text-red-400 text-sm mt-2">Error: {error}</div>}
 
             <Button
               type="submit"
@@ -117,5 +97,5 @@ export default function InitialTeamSetup({
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
