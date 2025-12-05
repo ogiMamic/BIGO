@@ -1,15 +1,9 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { useState } from "react"
+import { Bell } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([
@@ -20,20 +14,18 @@ export default function Notifications() {
       read: false,
     },
     { id: 3, message: "Team meeting reminder: Today at 3 PM", read: false },
-  ]);
+  ])
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length
 
-  const markAsRead = (id) => {
-    setNotifications(
-      notifications.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-  };
+  const markAsRead = (id: number) => {
+    setNotifications(notifications.map((n) => (n.id === id ? { ...n, read: true } : n)))
+  }
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className="relative">
+        <Button variant="outline" className="relative bg-transparent">
           <Bell className="mr-2 h-4 w-4" />
           Notifications
           {unreadCount > 0 && (
@@ -49,18 +41,10 @@ export default function Notifications() {
         </DialogHeader>
         <div className="space-y-4">
           {notifications.map((notification) => (
-            <div
-              key={notification.id}
-              className={`p-2 rounded ${
-                notification.read ? "bg-gray-100" : "bg-blue-100"
-              }`}
-            >
+            <div key={notification.id} className={`p-2 rounded ${notification.read ? "bg-gray-100" : "bg-blue-100"}`}>
               <p>{notification.message}</p>
               {!notification.read && (
-                <Button
-                  variant="link"
-                  onClick={() => markAsRead(notification.id)}
-                >
+                <Button variant="link" onClick={() => markAsRead(notification.id)}>
                   Mark as read
                 </Button>
               )}
@@ -69,5 +53,5 @@ export default function Notifications() {
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
