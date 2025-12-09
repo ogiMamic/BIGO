@@ -18,23 +18,24 @@ import {
 import { UserButton } from "@clerk/nextjs"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export default function Sidebar() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
 
   const menuItems = [
-    { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-    { name: "KPI", icon: TrendingUp, href: "/kpi" },
-    { name: "Storytelling", icon: BookOpen, href: "/storytelling" },
-    { name: "Streams", icon: Radio, href: "/streams" },
-    { name: "Messages", icon: MessageSquare, href: "/messages" },
-    { name: "Teams", icon: Users, href: "/teams" },
-    { name: "Tasks", icon: CheckSquare, href: "/tasks" },
+    { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard", description: "Overview of your team's activities" },
+    { name: "KPI", icon: TrendingUp, href: "/kpi", description: "Track key performance indicators" },
+    { name: "Storytelling", icon: BookOpen, href: "/storytelling", description: "Share and view team stories" },
+    { name: "Streams", icon: Radio, href: "/streams", description: "Real-time activity feed" },
+    { name: "Messages", icon: MessageSquare, href: "/messages", description: "Direct messages with team members" },
+    { name: "Teams", icon: Users, href: "/teams", description: "Manage your teams" },
+    { name: "Tasks", icon: CheckSquare, href: "/tasks", description: "Organize and track tasks" },
   ]
 
   return (
-    <>
+    <TooltipProvider>
       <Button
         variant="ghost"
         size="icon"
@@ -69,27 +70,41 @@ export default function Sidebar() {
           <ul className="space-y-2">
             {menuItems.map((item) => (
               <li key={item.name}>
-                <Link
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className={`flex items-center space-x-3 p-2 rounded-xl hover:bg-gray-700 ${
-                    pathname === item.href ? "bg-gray-700 text-green-500" : "text-gray-300"
-                  }`}
-                >
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.name}</span>
-                </Link>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className={`flex items-center space-x-3 p-2 rounded-xl hover:bg-gray-700 ${
+                        pathname === item.href ? "bg-gray-700 text-green-500" : "text-gray-300"
+                      }`}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      <span>{item.name}</span>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>{item.description}</p>
+                  </TooltipContent>
+                </Tooltip>
               </li>
             ))}
           </ul>
         </nav>
         <div className="p-4 flex items-center justify-between">
           <UserButton afterSignOutUrl="/" />
-          <Link href="/sign-out" className="text-gray-300 hover:text-white">
-            <LogOut className="h-5 w-5" />
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href="/sign-out" className="text-gray-300 hover:text-white">
+                <LogOut className="h-5 w-5" />
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>Sign out</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </aside>
-    </>
+    </TooltipProvider>
   )
 }

@@ -210,6 +210,7 @@ export default function Storytelling() {
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
           <CardTitle className="text-green-500 text-lg md:text-xl">Share Your Story</CardTitle>
+          <p className="text-sm text-gray-400 mt-2">Share your experiences, ideas, and updates with your team</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleNewStory} className="space-y-4">
@@ -221,7 +222,7 @@ export default function Storytelling() {
               className="bg-gray-700 border-gray-600 text-white"
             />
             <Textarea
-              placeholder="What's your story?"
+              placeholder="What's your story? Share your thoughts, progress, or any updates..."
               value={newStoryContent}
               onChange={(e) => setNewStoryContent(e.target.value)}
               className="bg-gray-700 border-gray-600 text-white min-h-[100px]"

@@ -90,18 +90,29 @@ export default function KPIDashboard() {
   return (
     <div className="flex h-screen bg-gray-900">
       <Sidebar />
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6">
         <header className="mb-6">
-          <h1 className="text-3xl font-bold text-green-500">KPI Dashboard</h1>
-          <p className="text-gray-400 mt-2">Real-time business intelligence metrics</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-green-500">KPI Dashboard</h1>
+          <p className="text-sm md:text-base text-gray-400 mt-2">
+            Monitor your team's performance with real-time metrics. Track user activity, task completion, and engagement
+            across all features.
+          </p>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {kpiCards.map((kpi, index) => (
             <Card key={index} className="bg-gray-800 border-gray-700">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-400">{kpi.title}</CardTitle>
-                <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
+                <div className="flex-1">
+                  <CardTitle className="text-sm font-medium text-gray-400">{kpi.title}</CardTitle>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {index === 0 && "Total team members"}
+                    {index === 1 && "Tasks marked as completed"}
+                    {index === 2 && "Total messages sent"}
+                    {index === 3 && "Stories published by team"}
+                  </p>
+                </div>
+                <kpi.icon className={`h-5 w-5 ${kpi.color} flex-shrink-0`} />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-white">{kpi.value}</div>
@@ -123,6 +134,7 @@ export default function KPIDashboard() {
           <Card className="bg-gray-800 border-gray-700">
             <CardHeader>
               <CardTitle className="text-green-500">Task Completion Rate</CardTitle>
+              <p className="text-xs text-gray-400 mt-1">Percentage of completed tasks vs total tasks</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -140,6 +152,7 @@ export default function KPIDashboard() {
           <Card className="bg-gray-800 border-gray-700">
             <CardHeader>
               <CardTitle className="text-green-500">Team Activity</CardTitle>
+              <p className="text-xs text-gray-400 mt-1">Recent team engagement metrics</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">

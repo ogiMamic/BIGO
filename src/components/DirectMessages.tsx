@@ -100,6 +100,7 @@ export default function DirectMessages() {
       <div className="w-full md:w-64 border-b md:border-r border-gray-700 flex flex-col bg-gray-800 md:rounded-l-2xl max-h-48 md:max-h-none">
         <div className="p-3 md:p-4">
           <h2 className="text-base md:text-lg font-semibold text-green-500 mb-2 md:mb-4">Direct Messages</h2>
+          <p className="text-xs text-gray-400 mb-3 hidden md:block">Send private messages to team members</p>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
