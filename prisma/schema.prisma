@@ -13,6 +13,8 @@ model User {
   clerkId           String         @unique // Added clerkId field for explicit Clerk authentication ID
   email             String         @unique
   name              String?
+  lastSeen          DateTime?
+  isOnline          Boolean        @default(false)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   stories           Story[]

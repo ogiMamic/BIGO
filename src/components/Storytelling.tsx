@@ -61,6 +61,15 @@ export default function Storytelling() {
   const [newComment, setNewComment] = useState("")
 
   useEffect(() => {
+    const syncUserData = async () => {
+      try {
+        await fetch("/api/users", { method: "POST" })
+      } catch (error) {
+        console.error("Failed to sync user data:", error)
+      }
+    }
+
+    syncUserData()
     fetchStories()
   }, [])
 

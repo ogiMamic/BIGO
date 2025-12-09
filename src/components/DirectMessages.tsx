@@ -32,13 +32,24 @@ export default function DirectMessages() {
   const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
+    const syncUserData = async () => {
+      try {
+        await fetch("/api/users", { method: "POST" })
+      } catch (error) {
+        console.error("Failed to sync user data:", error)
+      }
+    }
+
+    syncUserData()
     fetchUsers()
+    const interval = setInterval(fetchUsers, 10000)
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
     if (selectedUser) {
       fetchMessages(selectedUser.id)
-      const interval = setInterval(() => fetchMessages(selectedUser.id), 3000) // Auto-refresh every 3 seconds
+      const interval = setInterval(() => fetchMessages(selectedUser.id), 3000)
       return () => clearInterval(interval)
     }
   }, [selectedUser])
@@ -50,7 +61,7 @@ export default function DirectMessages() {
       const data = await response.json()
       setUsers(data)
     } catch (error) {
-      console.error("[v0] Error fetching users:", error)
+      console.error("Error fetching users:", error)
       toast.error("Failed to load users")
     }
   }
@@ -62,7 +73,7 @@ export default function DirectMessages() {
       const data = await response.json()
       setMessages(data)
     } catch (error) {
-      console.error("[v0] Error fetching messages:", error)
+      console.error("Error fetching messages:", error)
     }
   }
 
@@ -84,7 +95,7 @@ export default function DirectMessages() {
       setNewMessage("")
       await fetchMessages(selectedUser.id)
     } catch (error) {
-      console.error("[v0] Error sending message:", error)
+      console.error("Error sending message:", error)
       toast.error("Failed to send message")
     }
   }
@@ -97,7 +108,7 @@ export default function DirectMessages() {
 
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] md:h-screen bg-gray-900 text-white overflow-hidden">
-      <div className="w-full md:w-64 border-b md:border-r border-gray-700 flex flex-col bg-gray-800 md:rounded-l-2xl max-h-48 md:max-h-none">
+      <div className="w-full md:w-80 border-b md:border-r border-gray-700 flex flex-col bg-gray-800 md:rounded-l-2xl max-h-48 md:max-h-none">
         <div className="p-3 md:p-4">
           <h2 className="text-base md:text-lg font-semibold text-green-500 mb-2 md:mb-4">Direct Messages</h2>
           <p className="text-xs text-gray-400 mb-3 hidden md:block">Send private messages to team members</p>
@@ -119,14 +130,18 @@ export default function DirectMessages() {
                 <li
                   key={u.id}
                   onClick={() => setSelectedUser(u)}
-                  className={`flex items-center space-x-2 md:space-x-3 p-2 rounded-xl hover:bg-gray-700 cursor-pointer transition-colors duration-200 flex-shrink-0 ${
+                  className={`flex items-center space-x-2 md:space-x-3 p-2 rounded-xl hover:bg-gray-700 cursor-pointer transition-colors duration-200 flex-shrink-0 min-w-[80px] md:min-w-0 ${
                     selectedUser?.id === u.id ? "bg-gray-700" : ""
                   }`}
                 >
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>{u.name?.[0] || u.email[0].toUpperCase()}</AvatarFallback>
+                  <Avatar className="h-9 w-9 md:h-10 md:w-10">
+                    <AvatarFallback className="text-sm md:text-base">
+                      {u.name?.[0] || u.email[0].toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
-                  <span className="hidden md:block flex-1 truncate text-sm">{u.name || u.email}</span>
+                  <div className="hidden md:flex flex-col flex-1 min-w-0">
+                    <span className="truncate text-sm font-medium">{u.name || u.email}</span>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -138,9 +153,18 @@ export default function DirectMessages() {
         {selectedUser ? (
           <>
             <div className="p-3 md:p-4 border-b border-gray-700">
-              <h2 className="text-base md:text-lg font-semibold text-green-500 truncate">
-                {selectedUser.name || selectedUser.email}
-              </h2>
+              <div className="flex items-center space-x-3">
+                <Avatar className="h-10 w-10 md:h-12 md:w-12">
+                  <AvatarFallback className="text-base md:text-lg">
+                    {selectedUser.name?.[0] || selectedUser.email[0].toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-base md:text-lg font-semibold text-green-500 truncate">
+                    {selectedUser.name || selectedUser.email}
+                  </h2>
+                </div>
+              </div>
             </div>
             <ScrollArea className="flex-1 p-3 md:p-4">
               <div className="space-y-3 md:space-y-4">
