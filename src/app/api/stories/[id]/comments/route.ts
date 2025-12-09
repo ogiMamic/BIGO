@@ -2,16 +2,18 @@ import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/prisma"
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { userId } = auth()
+    const { userId } = await auth()
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
+
     const comments = await prisma.comment.findMany({
-      where: { storyId: params.id },
+      where: { storyId: id },
       include: {
         author: {
           select: {
@@ -28,7 +30,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     return NextResponse.json(comments)
   } catch (error) {
-    console.error("[v0] GET /api/stories/[id]/comments - Error:", error)
+    console.error("GET /api/stories/[id]/comments - Error:", error)
     return NextResponse.json(
       { error: "Failed to fetch comments", details: error instanceof Error ? error.message : String(error) },
       { status: 500 },
@@ -36,12 +38,12 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { userId } = auth()
+    const { userId } = await auth()
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const body = await req.json()
@@ -50,6 +52,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (!content) {
       return NextResponse.json({ error: "Content is required" }, { status: 400 })
     }
+
+    const { id } = await params
 
     await prisma.user.upsert({
       where: { id: userId },
@@ -65,7 +69,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       data: {
         content,
         authorId: userId,
-        storyId: params.id,
+        storyId: id,
       },
       include: {
         author: {
@@ -80,7 +84,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     return NextResponse.json(comment, { status: 201 })
   } catch (error) {
-    console.error("[v0] POST /api/stories/[id]/comments - Error:", error)
+    console.error("POST /api/stories/[id]/comments - Error:", error)
     return NextResponse.json(
       { error: "Failed to create comment", details: error instanceof Error ? error.message : String(error) },
       { status: 500 },

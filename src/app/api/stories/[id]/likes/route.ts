@@ -2,13 +2,15 @@ import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/prisma"
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { userId } = auth()
+    const { userId } = await auth()
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    const { id } = await params
 
     await prisma.user.upsert({
       where: { id: userId },
@@ -24,7 +26,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       where: {
         userId_storyId: {
           userId,
-          storyId: params.id,
+          storyId: id,
         },
       },
     })
@@ -41,14 +43,14 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       await prisma.like.create({
         data: {
           userId,
-          storyId: params.id,
+          storyId: id,
         },
       })
 
       return NextResponse.json({ liked: true })
     }
   } catch (error) {
-    console.error("[v0] POST /api/stories/[id]/likes - Error:", error)
+    console.error("POST /api/stories/[id]/likes - Error:", error)
     return NextResponse.json(
       { error: "Failed to toggle like", details: error instanceof Error ? error.message : String(error) },
       { status: 500 },
