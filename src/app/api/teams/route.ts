@@ -4,10 +4,10 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(req: Request) {
   try {
-    const { userId } = auth()
+    const { userId } = await auth()
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const teams = await prisma.team.findMany({
@@ -18,7 +18,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(teams)
   } catch (error) {
-    console.error("[v0] GET /api/teams - Error:", error)
+    console.error("GET /api/teams - Error:", error)
     return NextResponse.json(
       {
         error: "Internal Server Error",
@@ -31,10 +31,10 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { userId } = auth()
+    const { userId } = await auth()
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const body = await req.json()
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(team)
   } catch (error) {
-    console.error("[v0] POST /api/teams - Error:", error)
+    console.error("POST /api/teams - Error:", error)
     return NextResponse.json(
       {
         error: "Failed to create team",

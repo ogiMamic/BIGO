@@ -67,12 +67,15 @@ export default function Storytelling() {
   const fetchStories = async () => {
     try {
       const response = await fetch("/api/stories")
-      if (!response.ok) throw new Error("Failed to fetch stories")
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Failed to fetch stories" }))
+        throw new Error(error.error || "Failed to fetch stories")
+      }
       const data = await response.json()
       setStories(data)
     } catch (error) {
-      console.error("[v0] Error fetching stories:", error)
-      toast.error("Failed to fetch stories. Please try again later.")
+      console.error("Error fetching stories:", error)
+      toast.error(error instanceof Error ? error.message : "Failed to fetch stories. Please try again later.")
     }
   }
 
@@ -86,7 +89,10 @@ export default function Storytelling() {
           body: JSON.stringify({ title: newStoryTitle, content: newStoryContent }),
         })
 
-        if (!response.ok) throw new Error("Failed to create story")
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ error: "Failed to create story" }))
+          throw new Error(error.error || "Failed to create story")
+        }
 
         const createdStory = await response.json()
         setStories([createdStory, ...stories])
@@ -94,8 +100,8 @@ export default function Storytelling() {
         setNewStoryContent("")
         toast.success("Your story has been shared.")
       } catch (error) {
-        console.error("[v0] Error creating story:", error)
-        toast.error("Failed to create story. Please try again.")
+        console.error("Error creating story:", error)
+        toast.error(error instanceof Error ? error.message : "Failed to create story. Please try again.")
       }
     }
   }

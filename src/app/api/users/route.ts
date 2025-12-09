@@ -4,16 +4,16 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET() {
   try {
-    const { userId } = auth()
+    const { userId } = await auth()
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const users = await prisma.user.findMany({
       where: {
         NOT: {
-          id: userId, // Exclude current user
+          id: userId,
         },
       },
       select: {
@@ -29,7 +29,7 @@ export async function GET() {
 
     return NextResponse.json(users)
   } catch (error) {
-    console.error("[v0] GET /api/users - Error:", error)
+    console.error("GET /api/users - Error:", error)
     return NextResponse.json(
       { error: "Failed to fetch users", details: error instanceof Error ? error.message : String(error) },
       { status: 500 },
