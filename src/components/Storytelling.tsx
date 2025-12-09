@@ -151,7 +151,7 @@ export default function Storytelling() {
       toast.success("Comment added!")
     } catch (error) {
       console.error("[v0] Error adding comment:", error)
-      toast.error("Failed to add comment.")
+      toast.error(error instanceof Error ? error.message : "Failed to add comment.")
     }
   }
 
@@ -206,10 +206,10 @@ export default function Storytelling() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 md:p-6">
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle className="text-green-500">Share Your Story</CardTitle>
+          <CardTitle className="text-green-500 text-lg md:text-xl">Share Your Story</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleNewStory} className="space-y-4">
@@ -237,15 +237,17 @@ export default function Storytelling() {
         {stories.map((story) => (
           <Card key={story.id} className="bg-gray-800 border-gray-700">
             <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <Avatar>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0">
+                  <Avatar className="h-8 w-8 md:h-10 md:w-10 flex-shrink-0">
                     <AvatarImage src="/placeholder.svg" />
                     <AvatarFallback>{story.author.name?.[0] || "U"}</AvatarFallback>
                   </Avatar>
-                  <div>
-                    <CardTitle className="text-lg text-white">{story.title}</CardTitle>
-                    <p className="text-sm text-gray-400">{story.author.name || story.author.email}</p>
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-base md:text-lg text-white truncate">{story.title}</CardTitle>
+                    <p className="text-xs md:text-sm text-gray-400 truncate">
+                      {story.author.name || story.author.email}
+                    </p>
                   </div>
                 </div>
                 {user?.id === story.author.id && (
@@ -279,9 +281,9 @@ export default function Storytelling() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-300 mb-4">{story.content}</p>
+              <p className="text-sm md:text-base text-gray-300 mb-4">{story.content}</p>
 
-              <div className="flex items-center space-x-4 border-t border-gray-700 pt-4">
+              <div className="flex items-center space-x-2 md:space-x-4 border-t border-gray-700 pt-4">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -306,12 +308,14 @@ export default function Storytelling() {
                 <div className="mt-4 space-y-3 border-t border-gray-700 pt-4">
                   {comments[story.id]?.map((comment) => (
                     <div key={comment.id} className="flex space-x-2">
-                      <Avatar className="h-8 w-8">
+                      <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
                         <AvatarFallback>{comment.author.name?.[0] || "U"}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 bg-gray-700 rounded-lg p-2">
                         <div className="flex items-center justify-between">
-                          <p className="text-xs text-gray-400">{comment.author.name || comment.author.email}</p>
+                          <p className="text-xs md:text-sm text-gray-400 truncate">
+                            {comment.author.name || comment.author.email}
+                          </p>
                           {user?.id === comment.authorId && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -349,18 +353,18 @@ export default function Storytelling() {
                       </div>
                     </div>
                   ))}
-                  <div className="flex space-x-2">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                     <Input
                       placeholder="Write a comment..."
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-gray-700 border-gray-600 text-white flex-1"
                       onKeyPress={(e) => e.key === "Enter" && handleAddComment(story.id)}
                     />
                     <Button
                       size="icon"
                       onClick={() => handleAddComment(story.id)}
-                      className="bg-green-500 hover:bg-green-600"
+                      className="bg-green-500 hover:bg-green-600 w-full sm:w-auto"
                     >
                       <Send className="h-4 w-4" />
                     </Button>
