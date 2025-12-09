@@ -4,10 +4,10 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(req: Request) {
   try {
-    const { userId } = auth()
+    const { userId } = await auth()
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const userTeams = await prisma.team.findMany({
@@ -68,7 +68,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(kpiData)
   } catch (error) {
-    console.error("[v0] GET /api/kpi - Error:", error)
+    console.error("GET /api/kpi - Error:", error)
     return NextResponse.json(
       { error: "Failed to fetch KPI data", details: error instanceof Error ? error.message : String(error) },
       { status: 500 },

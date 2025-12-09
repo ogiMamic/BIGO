@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TrendingUp, TrendingDown, Users, CheckCircle, MessageSquare, BookOpen } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import Sidebar from "@/components/Sidebar"
+import { toast } from "@/hooks/use-toast"
 
 interface KPIData {
   activeUsers: number
@@ -37,9 +38,21 @@ export default function KPIDashboard() {
       if (response.ok) {
         const data = await response.json()
         setKpiData(data)
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error loading KPIs",
+          description: error.error || "Failed to fetch KPI data",
+          variant: "destructive",
+        })
       }
     } catch (error) {
-      console.error("[v0] Error fetching KPI data:", error)
+      console.error("Error fetching KPI data:", error)
+      toast({
+        title: "Error loading KPIs",
+        description: "Could not connect to server",
+        variant: "destructive",
+      })
     }
   }
 
