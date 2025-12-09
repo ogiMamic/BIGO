@@ -4,10 +4,10 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(req: Request) {
   try {
-    const { userId } = auth()
+    const { userId } = await auth()
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { searchParams } = new URL(req.url)
@@ -35,7 +35,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(messages)
   } catch (error) {
-    console.error("[v0] GET /api/messages - Error:", error)
+    console.error("[MESSAGES_API_ERROR]", error)
     return NextResponse.json(
       { error: "Failed to fetch messages", details: error instanceof Error ? error.message : String(error) },
       { status: 500 },
@@ -45,10 +45,10 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { userId } = auth()
+    const { userId } = await auth()
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const body = await req.json()
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(message, { status: 201 })
   } catch (error) {
-    console.error("[v0] POST /api/messages - Error:", error)
+    console.error("[MESSAGES_API_ERROR]", error)
     return NextResponse.json(
       { error: "Failed to create message", details: error instanceof Error ? error.message : String(error) },
       { status: 500 },
