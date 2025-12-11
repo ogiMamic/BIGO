@@ -8,7 +8,6 @@ import {
   BarChart,
   Users,
   CheckSquare,
-  LogOut,
   LayoutDashboard,
   TrendingUp,
   Radio,
@@ -95,18 +94,8 @@ export default function Sidebar() {
           </ul>
         </nav>
 
-        <div className="p-4 border-t border-gray-700 flex items-center justify-between flex-shrink-0">
+        <div className="p-4 border-t border-gray-700 flex items-center justify-center flex-shrink-0">
           <UserButton afterSignOutUrl="/" />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link href="/sign-out" className="text-gray-300 hover:text-white">
-                <LogOut className="h-5 w-5" />
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>Sign out</p>
-            </TooltipContent>
-          </Tooltip>
         </div>
       </aside>
 

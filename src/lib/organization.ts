@@ -39,8 +39,12 @@ export async function getCurrentUserWithOrg() {
         },
       },
     },
-    include: {
-      organization: true,
+    select: {
+      id: true,
+      clerkId: true,
+      name: true,
+      email: true,
+      organizationId: true,
     },
   })
 
