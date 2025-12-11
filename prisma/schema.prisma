@@ -8,15 +8,31 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
+model Organization {
+  id            String         @id @default(cuid())
+  name          String
+  slug          String         @unique // For subdomain or path routing
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  users         User[]
+  teams         Team[]
+  stories       Story[]
+  messages      Message[]
+  storytellings Storytelling[]
+  directMessages DirectMessage[]
+}
+
 model User {
   id                String         @id @default(cuid())
-  clerkId           String         @unique // Added clerkId field for explicit Clerk authentication ID
+  clerkId           String         @unique
   email             String         @unique
   name              String?
   lastSeen          DateTime?
   isOnline          Boolean        @default(false)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
+  organization      Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId    String
   stories           Story[]
   tasks             Task[]
   messages          Message[]
@@ -35,7 +51,7 @@ model TeamMember {
   id        String   @id @default(cuid())
   userId    String
   teamId    String
-  role      String   // "ADMIN", "MEMBER", etc.
+  role      String
   user      User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   createdAt DateTime @default(now())
@@ -55,6 +71,8 @@ model Storytelling {
   stories   Story[]
   team      Team     @relation(fields: [teamId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   teamId    String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
 }
 
 model Story {
@@ -69,6 +87,8 @@ model Story {
   teamId         String
   storytelling   Storytelling @relation(fields: [storytellingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   storytellingId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
   tasks          Task[]
   comments       Comment[]
   likes          Like[]
@@ -95,6 +115,8 @@ model Message {
   senderId  String
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   teamId    String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
 }
 
 model Team {
@@ -109,6 +131,8 @@ model Team {
   stories       Story[]
   messages      Message[]
   storytellings Storytelling[]
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
 }
 
 model Comment {
@@ -142,6 +166,8 @@ model DirectMessage {
   senderId    String
   recipient   User     @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   recipientId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
 
   @@index([senderId, recipientId])
   @@index([recipientId, senderId])
