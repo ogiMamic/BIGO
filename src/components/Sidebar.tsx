@@ -50,7 +50,7 @@ export default function Sidebar() {
           z-40
           ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
-        style={{ height: "100vh", height: "100dvh" }}
+        style={{ height: "100dvh" }}
       >
         <div className="p-4 flex items-center justify-between md:justify-start md:space-x-2 flex-shrink-0">
           <Button
