@@ -36,15 +36,6 @@ export default function Sidebar() {
 
   return (
     <TooltipProvider>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden bg-gray-800 text-white hover:bg-gray-700"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-      </Button>
-
       {isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onClick={() => setIsOpen(false)} />
       )}
@@ -60,13 +51,24 @@ export default function Sidebar() {
           ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
       >
-        <div className="p-4 pt-16 md:pt-4 flex items-center space-x-2">
-          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-            <BarChart className="h-5 w-5 text-white" />
+        <div className="p-4 flex items-center justify-between md:justify-start md:space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden text-white hover:bg-gray-700"
+            onClick={() => setIsOpen(false)}
+          >
+            <X className="h-6 w-6" />
+          </Button>
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+              <BarChart className="h-5 w-5 text-white" />
+            </div>
+            <h1 className="text-xl font-semibold text-white">BIGO</h1>
           </div>
-          <h1 className="text-xl font-semibold text-white">BIGO</h1>
         </div>
-        <nav className="flex-1 p-4">
+
+        <nav className="flex-1 p-4 overflow-y-auto">
           <ul className="space-y-2">
             {menuItems.map((item) => (
               <li key={item.name}>
@@ -91,7 +93,8 @@ export default function Sidebar() {
             ))}
           </ul>
         </nav>
-        <div className="p-4 flex items-center justify-between">
+
+        <div className="p-4 border-t border-gray-700 flex items-center justify-between flex-shrink-0">
           <UserButton afterSignOutUrl="/" />
           <Tooltip>
             <TooltipTrigger asChild>
@@ -105,6 +108,17 @@ export default function Sidebar() {
           </Tooltip>
         </div>
       </aside>
+
+      {!isOpen && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="fixed top-4 left-4 z-50 md:hidden bg-gray-800 text-white hover:bg-gray-700 shadow-lg"
+          onClick={() => setIsOpen(true)}
+        >
+          <Menu className="h-6 w-6" />
+        </Button>
+      )}
     </TooltipProvider>
   )
 }

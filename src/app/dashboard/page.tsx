@@ -48,9 +48,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-4 bg-gray-900 min-h-screen">
+    <div className="p-4 md:p-6 bg-gray-900 min-h-screen">
       {hasTeam && (
-        <div className="mb-6">
+        <div className="mb-6 pl-12 md:pl-0">
           <h1 className="text-2xl md:text-3xl font-bold text-green-500">Welcome back, {user?.firstName || "there"}!</h1>
           <p className="text-sm md:text-base text-gray-400 mt-1">Here's what's happening with your team</p>
         </div>
