@@ -45,13 +45,14 @@ export default function Sidebar() {
           fixed md:static
           inset-y-0 left-0
           w-64 bg-gray-800 border-r border-gray-700
-          h-screen flex flex-col
+          flex flex-col
           transform transition-transform duration-300 ease-in-out
           z-40
           ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
+        style={{ height: "100vh", height: "100dvh" }}
       >
-        <div className="p-4 flex items-center justify-between md:justify-start md:space-x-2">
+        <div className="p-4 flex items-center justify-between md:justify-start md:space-x-2 flex-shrink-0">
           <Button
             variant="ghost"
             size="icon"
@@ -68,7 +69,7 @@ export default function Sidebar() {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 overflow-y-auto">
+        <nav className="flex-1 p-4 overflow-y-auto min-h-0">
           <ul className="space-y-2">
             {menuItems.map((item) => (
               <li key={item.name}>

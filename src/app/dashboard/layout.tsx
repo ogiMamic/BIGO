@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
 import Sidebar from "@/components/Sidebar"
+import { UserButton } from "@clerk/nextjs"
 
 export default function DashboardLayout({
   children,
@@ -37,7 +38,12 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden" suppressHydrationWarning>
       <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-gray-900 w-full pl-0 md:pl-0">{children}</main>
+      <main className="flex-1 overflow-y-auto bg-gray-900 w-full">
+        <div className="md:hidden fixed top-0 right-0 z-50 p-4">
+          <UserButton afterSignOutUrl="/" />
+        </div>
+        {children}
+      </main>
     </div>
   )
 }
