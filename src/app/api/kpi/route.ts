@@ -12,7 +12,6 @@ export async function GET(req: Request) {
 
     const userTeams = await prisma.team.findMany({
       where: {
-        organizationId: currentUser.organizationId,
         OR: [{ ownerId: currentUser.id }, { members: { some: { id: currentUser.id } } }],
       },
       include: {
@@ -28,7 +27,6 @@ export async function GET(req: Request) {
       where: {
         story: {
           teamId: { in: teamIds },
-          organizationId: currentUser.organizationId,
         },
         status: "Completed",
       },
@@ -38,14 +36,12 @@ export async function GET(req: Request) {
       where: {
         story: {
           teamId: { in: teamIds },
-          organizationId: currentUser.organizationId,
         },
       },
     })
 
     const messagesCount = await prisma.message.count({
       where: {
-        organizationId: currentUser.organizationId,
         teamId: { in: teamIds },
         createdAt: {
           gte: new Date(new Date().setHours(0, 0, 0, 0)),
@@ -55,7 +51,6 @@ export async function GET(req: Request) {
 
     const storiesCount = await prisma.story.count({
       where: {
-        organizationId: currentUser.organizationId,
         teamId: { in: teamIds },
       },
     })
