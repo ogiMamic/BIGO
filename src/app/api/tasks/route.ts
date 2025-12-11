@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Title and storyId are required" }, { status: 400 })
     }
 
-    await getCurrentUserWithOrg(userId)
+    await getCurrentUserWithOrg()
 
     const task = await prisma.task.create({
       data: {

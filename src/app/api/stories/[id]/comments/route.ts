@@ -56,7 +56,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const { id } = await params
 
-    await getCurrentUserWithOrg(userId)
+    await getCurrentUserWithOrg()
 
     const comment = await prisma.comment.create({
       data: {
