@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
-import { auth, currentUser } from "@clerk/nextjs/server"
+import { auth } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/prisma"
+import { getCurrentUserWithOrg } from "@/lib/organization"
 
 export async function GET(req: Request) {
   try {
@@ -60,20 +61,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Title and storyId are required" }, { status: 400 })
     }
 
-    const clerkUser = await currentUser()
-
-    await prisma.user.upsert({
-      where: { clerkId: userId },
-      update: {},
-      create: {
-        clerkId: userId,
-        name:
-          clerkUser?.firstName && clerkUser?.lastName
-            ? `${clerkUser.firstName} ${clerkUser.lastName}`
-            : clerkUser?.firstName || clerkUser?.emailAddresses[0]?.emailAddress || userId,
-        email: clerkUser?.emailAddresses[0]?.emailAddress || `${userId}@clerk.user`,
-      },
-    })
+    await getCurrentUserWithOrg(userId)
 
     const task = await prisma.task.create({
       data: {

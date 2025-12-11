@@ -11,6 +11,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "BIGO - Agile Team Management",
   description: "Agile team management application with storytelling and task tracking",
+  manifest: "/manifest.json",
 }
 
 export const dynamic = "force-dynamic"

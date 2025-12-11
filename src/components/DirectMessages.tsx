@@ -1,13 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Search, Send } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { Search, Send, Bell, BellOff } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "sonner"
 import { useUser } from "@clerk/nextjs"
+import {
+  requestNotificationPermission,
+  sendBrowserNotification,
+  checkNotificationSupport,
+} from "@/lib/push-notifications"
 
 interface User {
   id: string
@@ -30,6 +35,8 @@ export default function DirectMessages() {
   const [messages, setMessages] = useState<DirectMessage[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const previousMessagesCount = useRef(0)
 
   useEffect(() => {
     const syncUserData = async () => {
@@ -42,6 +49,11 @@ export default function DirectMessages() {
 
     syncUserData()
     fetchUsers()
+
+    if (checkNotificationSupport()) {
+      setNotificationsEnabled(Notification.permission === "granted")
+    }
+
     const interval = setInterval(fetchUsers, 10000)
     return () => clearInterval(interval)
   }, [])
@@ -53,6 +65,21 @@ export default function DirectMessages() {
       return () => clearInterval(interval)
     }
   }, [selectedUser])
+
+  useEffect(() => {
+    if (messages.length > previousMessagesCount.current && previousMessagesCount.current > 0) {
+      const newMessages = messages.slice(previousMessagesCount.current)
+      newMessages.forEach((msg) => {
+        if (msg.sender.id !== user?.id && notificationsEnabled) {
+          sendBrowserNotification(`New message from ${msg.sender.name || msg.sender.email}`, {
+            body: msg.content,
+            tag: `message-${msg.id}`,
+          })
+        }
+      })
+    }
+    previousMessagesCount.current = messages.length
+  }, [messages, user?.id, notificationsEnabled])
 
   const fetchUsers = async () => {
     try {
@@ -100,6 +127,26 @@ export default function DirectMessages() {
     }
   }
 
+  const handleToggleNotifications = async () => {
+    if (!checkNotificationSupport()) {
+      toast.error("Your browser doesn't support notifications")
+      return
+    }
+
+    if (notificationsEnabled) {
+      setNotificationsEnabled(false)
+      toast.info("Notifications disabled")
+    } else {
+      const permission = await requestNotificationPermission()
+      if (permission === "granted") {
+        setNotificationsEnabled(true)
+        toast.success("Notifications enabled")
+      } else {
+        toast.error("Notification permission denied")
+      }
+    }
+  }
+
   const filteredUsers = users.filter(
     (u) =>
       u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -110,7 +157,22 @@ export default function DirectMessages() {
     <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] md:h-screen bg-gray-900 text-white overflow-hidden">
       <div className="w-full md:w-80 border-b md:border-r border-gray-700 flex flex-col bg-gray-800 md:rounded-l-2xl max-h-48 md:max-h-none">
         <div className="p-3 md:p-4">
-          <h2 className="text-base md:text-lg font-semibold text-green-500 mb-2 md:mb-4">Direct Messages</h2>
+          <div className="flex items-center justify-between mb-2 md:mb-4">
+            <h2 className="text-base md:text-lg font-semibold text-green-500">Direct Messages</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleToggleNotifications}
+              className="h-8 w-8"
+              title={notificationsEnabled ? "Disable notifications" : "Enable notifications"}
+            >
+              {notificationsEnabled ? (
+                <Bell className="h-4 w-4 text-green-500" />
+              ) : (
+                <BellOff className="h-4 w-4 text-gray-400" />
+              )}
+            </Button>
+          </div>
           <p className="text-xs text-gray-400 mb-3 hidden md:block">Send private messages to team members</p>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />

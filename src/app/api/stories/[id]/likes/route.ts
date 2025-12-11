@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/prisma"
+import { getCurrentUserWithOrg } from "@/lib/organization"
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -12,15 +13,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const { id } = await params
 
-    await prisma.user.upsert({
-      where: { id: userId },
-      update: {},
-      create: {
-        id: userId,
-        clerkId: userId,
-        email: `${userId}@clerk.user`,
-      },
-    })
+    await getCurrentUserWithOrg()
 
     const existingLike = await prisma.like.findUnique({
       where: {
