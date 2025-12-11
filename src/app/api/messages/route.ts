@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/prisma"
+import { getCurrentUserWithOrg } from "@/lib/organization"
 
 export async function GET(req: Request) {
   try {
-    const { userId } = await auth()
+    const currentUser = await getCurrentUserWithOrg()
 
-    if (!userId) {
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -18,7 +18,10 @@ export async function GET(req: Request) {
     }
 
     const messages = await prisma.message.findMany({
-      where: { teamId },
+      where: {
+        organizationId: currentUser.organizationId,
+        teamId,
+      },
       include: {
         sender: {
           select: {
@@ -45,9 +48,9 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { userId } = await auth()
+    const currentUser = await getCurrentUserWithOrg()
 
-    if (!userId) {
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -58,21 +61,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Content and teamId are required" }, { status: 400 })
     }
 
-    await prisma.user.upsert({
-      where: { id: userId },
-      update: {},
-      create: {
-        id: userId,
-        clerkId: userId,
-        email: `${userId}@clerk.user`,
-      },
-    })
-
     const message = await prisma.message.create({
       data: {
         content,
-        senderId: userId,
+        senderId: currentUser.id,
         teamId,
+        organizationId: currentUser.organizationId,
       },
       include: {
         sender: {

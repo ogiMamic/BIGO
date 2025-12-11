@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server"
-import { auth, currentUser } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/prisma"
+import { getCurrentUserWithOrg } from "@/lib/organization"
 
 export async function GET() {
   try {
-    const { userId } = await auth()
+    const currentUser = await getCurrentUserWithOrg()
 
-    if (!userId) {
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const users = await prisma.user.findMany({
       where: {
+        organizationId: currentUser.organizationId,
         NOT: {
-          clerkId: userId,
+          clerkId: currentUser.clerkId,
         },
       },
       select: {
@@ -39,36 +40,13 @@ export async function GET() {
 
 export async function POST() {
   try {
-    const { userId } = await auth()
-    if (!userId) {
+    const currentUser = await getCurrentUserWithOrg()
+
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const clerkUser = await currentUser()
-    if (!clerkUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
-    }
-
-    const user = await prisma.user.upsert({
-      where: { clerkId: userId },
-      update: {
-        name:
-          clerkUser.firstName && clerkUser.lastName
-            ? `${clerkUser.firstName} ${clerkUser.lastName}`
-            : clerkUser.firstName || clerkUser.emailAddresses[0]?.emailAddress || userId,
-        email: clerkUser.emailAddresses[0]?.emailAddress || `${userId}@clerk.user`,
-      },
-      create: {
-        clerkId: userId,
-        name:
-          clerkUser.firstName && clerkUser.lastName
-            ? `${clerkUser.firstName} ${clerkUser.lastName}`
-            : clerkUser.firstName || clerkUser.emailAddresses[0]?.emailAddress || userId,
-        email: clerkUser.emailAddresses[0]?.emailAddress || `${userId}@clerk.user`,
-      },
-    })
-
-    return NextResponse.json(user)
+    return NextResponse.json(currentUser)
   } catch (error) {
     console.error("POST /api/users - Error:", error)
     return NextResponse.json(

@@ -1,42 +1,23 @@
 import { NextResponse } from "next/server"
-import { auth, currentUser } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/prisma"
+import { getCurrentUserWithOrg } from "@/lib/organization"
 
 export async function GET(req: Request) {
   try {
-    const { userId } = await auth()
+    const currentUser = await getCurrentUserWithOrg()
 
-    if (!userId) {
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { searchParams } = new URL(req.url)
     const teamId = searchParams.get("teamId")
 
-    const clerkUser = await currentUser()
-    if (clerkUser) {
-      await prisma.user.upsert({
-        where: { clerkId: userId },
-        update: {
-          name:
-            clerkUser.firstName && clerkUser.lastName
-              ? `${clerkUser.firstName} ${clerkUser.lastName}`
-              : clerkUser.firstName || clerkUser.emailAddresses[0]?.emailAddress || userId,
-          email: clerkUser.emailAddresses[0]?.emailAddress || `${userId}@clerk.user`,
-        },
-        create: {
-          clerkId: userId,
-          name:
-            clerkUser.firstName && clerkUser.lastName
-              ? `${clerkUser.firstName} ${clerkUser.lastName}`
-              : clerkUser.firstName || clerkUser.emailAddresses[0]?.emailAddress || userId,
-          email: clerkUser.emailAddresses[0]?.emailAddress || `${userId}@clerk.user`,
-        },
-      })
-    }
-
     const stories = await prisma.story.findMany({
-      where: teamId ? { teamId } : {},
+      where: {
+        organizationId: currentUser.organizationId,
+        ...(teamId ? { teamId } : {}),
+      },
       include: {
         author: {
           select: {
@@ -72,9 +53,9 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { userId } = await auth()
+    const currentUser = await getCurrentUserWithOrg()
 
-    if (!userId) {
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -85,27 +66,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Title and content are required" }, { status: 400 })
     }
 
-    const clerkUser = await currentUser()
-
-    await prisma.user.upsert({
-      where: { clerkId: userId },
-      update: {},
-      create: {
-        clerkId: userId,
-        name:
-          clerkUser?.firstName && clerkUser?.lastName
-            ? `${clerkUser.firstName} ${clerkUser.lastName}`
-            : clerkUser?.firstName || clerkUser?.emailAddresses[0]?.emailAddress || userId,
-        email: clerkUser?.emailAddresses[0]?.emailAddress || `${userId}@clerk.user`,
-      },
-    })
-
     let finalTeamId = teamId
     let finalStorytellingId = storytellingId
 
     if (!finalTeamId) {
       const userTeam = await prisma.team.findFirst({
-        where: { ownerId: userId },
+        where: {
+          organizationId: currentUser.organizationId,
+          ownerId: currentUser.id,
+        },
       })
 
       if (!userTeam) {
@@ -117,15 +86,19 @@ export async function POST(req: Request) {
 
     if (!finalStorytellingId) {
       let storytelling = await prisma.storytelling.findFirst({
-        where: { teamId: finalTeamId },
+        where: {
+          organizationId: currentUser.organizationId,
+          teamId: finalTeamId,
+        },
       })
 
       if (!storytelling) {
         storytelling = await prisma.storytelling.create({
           data: {
             title: "Default Storytelling",
-            ownerId: userId,
+            ownerId: currentUser.id,
             teamId: finalTeamId,
+            organizationId: currentUser.organizationId,
           },
         })
       }
@@ -137,9 +110,10 @@ export async function POST(req: Request) {
       data: {
         title,
         content,
-        authorId: userId,
+        authorId: currentUser.id,
         teamId: finalTeamId,
         storytellingId: finalStorytellingId,
+        organizationId: currentUser.organizationId,
       },
       include: {
         author: {

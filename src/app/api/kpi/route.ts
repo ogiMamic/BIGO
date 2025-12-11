@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/prisma"
+import { getCurrentUserWithOrg } from "@/lib/organization"
 
 export async function GET(req: Request) {
   try {
-    const { userId } = await auth()
+    const currentUser = await getCurrentUserWithOrg()
 
-    if (!userId) {
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const userTeams = await prisma.team.findMany({
       where: {
-        OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
+        organizationId: currentUser.organizationId,
+        OR: [{ ownerId: currentUser.id }, { members: { some: { id: currentUser.id } } }],
       },
       include: {
         members: true,
@@ -27,6 +28,7 @@ export async function GET(req: Request) {
       where: {
         story: {
           teamId: { in: teamIds },
+          organizationId: currentUser.organizationId,
         },
         status: "Completed",
       },
@@ -36,12 +38,14 @@ export async function GET(req: Request) {
       where: {
         story: {
           teamId: { in: teamIds },
+          organizationId: currentUser.organizationId,
         },
       },
     })
 
     const messagesCount = await prisma.message.count({
       where: {
+        organizationId: currentUser.organizationId,
         teamId: { in: teamIds },
         createdAt: {
           gte: new Date(new Date().setHours(0, 0, 0, 0)),
@@ -51,6 +55,7 @@ export async function GET(req: Request) {
 
     const storiesCount = await prisma.story.count({
       where: {
+        organizationId: currentUser.organizationId,
         teamId: { in: teamIds },
       },
     })

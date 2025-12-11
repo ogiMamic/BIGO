@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server"
-import { auth, currentUser } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/prisma"
+import { getCurrentUserWithOrg } from "@/lib/organization"
 
 export async function GET(req: Request) {
   try {
-    const { userId } = await auth()
+    const currentUser = await getCurrentUserWithOrg()
 
-    if (!userId) {
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -19,9 +19,10 @@ export async function GET(req: Request) {
 
     const messages = await prisma.directMessage.findMany({
       where: {
+        organizationId: currentUser.organizationId,
         OR: [
-          { senderId: userId, recipientId },
-          { senderId: recipientId, recipientId: userId },
+          { senderId: currentUser.id, recipientId },
+          { senderId: recipientId, recipientId: currentUser.id },
         ],
       },
       include: {
@@ -57,9 +58,9 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { userId } = await auth()
+    const currentUser = await getCurrentUserWithOrg()
 
-    if (!userId) {
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -70,26 +71,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Content and recipientId are required" }, { status: 400 })
     }
 
-    const clerkUser = await currentUser()
-
-    await prisma.user.upsert({
-      where: { clerkId: userId },
-      update: {},
-      create: {
-        clerkId: userId,
-        name:
-          clerkUser?.firstName && clerkUser?.lastName
-            ? `${clerkUser.firstName} ${clerkUser.lastName}`
-            : clerkUser?.firstName || clerkUser?.emailAddresses[0]?.emailAddress || userId,
-        email: clerkUser?.emailAddresses[0]?.emailAddress || `${userId}@clerk.user`,
-      },
-    })
-
     const message = await prisma.directMessage.create({
       data: {
         content,
-        senderId: userId,
+        senderId: currentUser.id,
         recipientId,
+        organizationId: currentUser.organizationId,
       },
       include: {
         sender: {
