@@ -88,6 +88,21 @@ export async function POST(req: Request) {
         name,
         ownerId: currentUser.id,
         organizationId: currentUser.organizationId,
+        members: {
+          connect: {
+            id: currentUser.id,
+          },
+        },
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        members: true,
       },
     })
 

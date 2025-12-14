@@ -27,7 +27,11 @@ export default function DashboardPage() {
       if (response.ok) {
         const teams = await response.json()
         console.log("[v0] Teams fetched:", teams.length)
-        setHasTeam(teams.length > 0)
+        const userTeams = teams.filter(
+          (team: any) => team.ownerId === user?.id || team.members.some((member: any) => member.id === user?.id),
+        )
+        console.log("[v0] User is in", userTeams.length, "teams")
+        setHasTeam(userTeams.length > 0)
       } else {
         console.error("[v0] Failed to fetch teams, response not ok")
         setHasTeam(false)
