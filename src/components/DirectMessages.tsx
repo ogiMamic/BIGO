@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { useUser } from "@clerk/nextjs"
 import {
@@ -18,6 +19,7 @@ interface User {
   id: string
   name: string | null
   email: string
+  teams?: { id: string; name: string }[]
 }
 
 interface DirectMessage {
@@ -203,6 +205,27 @@ export default function DirectMessages() {
                   </Avatar>
                   <div className="hidden md:flex flex-col flex-1 min-w-0">
                     <span className="truncate text-sm font-medium">{u.name || u.email}</span>
+                    {u.teams && u.teams.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {u.teams.slice(0, 2).map((team) => (
+                          <Badge
+                            key={team.id}
+                            variant="secondary"
+                            className="text-[10px] px-1.5 py-0 bg-green-500/20 text-green-400 border-0"
+                          >
+                            {team.name}
+                          </Badge>
+                        ))}
+                        {u.teams.length > 2 && (
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px] px-1.5 py-0 bg-gray-600 text-gray-300 border-0"
+                          >
+                            +{u.teams.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </li>
               ))}

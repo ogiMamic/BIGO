@@ -41,17 +41,21 @@ export default function InitialTeamSetup({ onTeamCreated }: InitialTeamSetupProp
   const fetchExistingTeams = async () => {
     try {
       setLoadingTeams(true)
+      console.log("[v0] Fetching existing teams...")
       const response = await fetch("/api/teams")
+      console.log("[v0] Teams response status:", response.status)
       if (response.ok) {
         const teams = await response.json()
+        console.log("[v0] Teams fetched:", teams.length, teams)
         setExistingTeams(teams)
         // If no teams exist, switch to create mode automatically
         if (teams.length === 0) {
+          console.log("[v0] No teams found, switching to create mode")
           setMode("create")
         }
       }
     } catch (error) {
-      console.error("Error fetching teams:", error)
+      console.error("[v0] Error fetching teams:", error)
     } finally {
       setLoadingTeams(false)
     }
@@ -62,20 +66,23 @@ export default function InitialTeamSetup({ onTeamCreated }: InitialTeamSetupProp
     setError(null)
 
     try {
+      console.log("[v0] Joining team:", teamId)
       const response = await fetch(`/api/teams/${teamId}/join`, {
         method: "POST",
       })
 
       if (!response.ok) {
         const errorData = await response.json()
+        console.error("[v0] Failed to join team:", errorData)
         throw new Error(errorData.error || "Failed to join team")
       }
 
+      console.log("[v0] Successfully joined team")
       toast.success("Successfully joined team!")
       onTeamCreated()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to join team"
-      console.error("Error joining team:", error)
+      console.error("[v0] Error joining team:", error)
       setError(errorMessage)
       toast.error(errorMessage)
     } finally {
@@ -90,6 +97,7 @@ export default function InitialTeamSetup({ onTeamCreated }: InitialTeamSetupProp
       setError(null)
 
       try {
+        console.log("[v0] Creating team with name:", teamName)
         const response = await fetch("/api/teams", {
           method: "POST",
           headers: {
@@ -98,20 +106,22 @@ export default function InitialTeamSetup({ onTeamCreated }: InitialTeamSetupProp
           body: JSON.stringify({ name: teamName }),
         })
 
+        console.log("[v0] Team creation response status:", response.status)
+
         if (!response.ok) {
           const errorData = await response.json()
-          console.error("Team creation error response:", errorData)
+          console.error("[v0] Team creation error response:", errorData)
           throw new Error(errorData.details || errorData.error || "Failed to create team")
         }
 
         const team = await response.json()
-        console.log("Team created successfully:", team)
+        console.log("[v0] Team created successfully:", team)
 
         toast.success("Team created successfully!")
         onTeamCreated()
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Failed to create team"
-        console.error("Error creating team:", error)
+        console.error("[v0] Error creating team:", error)
         setError(errorMessage)
         toast.error(errorMessage)
       } finally {

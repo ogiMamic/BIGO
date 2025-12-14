@@ -19,7 +19,6 @@ export async function GET(req: Request) {
 
     const messages = await prisma.message.findMany({
       where: {
-        organizationId: currentUser.organizationId,
         teamId,
       },
       include: {

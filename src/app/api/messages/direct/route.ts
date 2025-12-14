@@ -19,7 +19,6 @@ export async function GET(req: Request) {
 
     const messages = await prisma.directMessage.findMany({
       where: {
-        organizationId: currentUser.organizationId,
         OR: [
           { senderId: currentUser.id, recipientId },
           { senderId: recipientId, recipientId: currentUser.id },

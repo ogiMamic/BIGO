@@ -22,17 +22,29 @@ export async function GET(req: Request) {
             email: true,
           },
         },
+        members: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         _count: {
           select: {
             members: true,
+            stories: true,
+            messages: true,
           },
         },
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     })
 
     return NextResponse.json(teams)
   } catch (error) {
-    console.error("[v0] GET /api/teams - Error:", error)
+    console.error("GET /api/teams - Error:", error)
     return NextResponse.json(
       {
         error: "Internal Server Error",
@@ -45,30 +57,27 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    console.log("[v0] POST /api/teams - Starting team creation")
+    console.log("POST /api/teams - Starting team creation")
 
     const currentUser = await getCurrentUserWithOrg()
-    console.log(
-      "[v0] Current user:",
-      currentUser ? { id: currentUser.id, organizationId: currentUser.organizationId } : "null",
-    )
+    console.log("Current user:", currentUser ? { id: currentUser.id } : "null")
 
     if (!currentUser) {
-      console.error("[v0] No current user found")
+      console.error("No current user found")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const body = await req.json()
-    console.log("[v0] Request body:", body)
+    console.log("Request body:", body)
 
     const { name } = body
 
     if (!name || typeof name !== "string") {
-      console.error("[v0] Invalid team name:", name)
+      console.error("Invalid team name:", name)
       return NextResponse.json({ error: "Invalid request: name is required" }, { status: 400 })
     }
 
-    console.log("[v0] Creating team with data:", {
+    console.log("Creating team with data:", {
       name,
       ownerId: currentUser.id,
       organizationId: currentUser.organizationId,
@@ -82,11 +91,11 @@ export async function POST(req: Request) {
       },
     })
 
-    console.log("[v0] Team created successfully:", team.id)
+    console.log("Team created successfully:", team.id)
     return NextResponse.json(team)
   } catch (error) {
-    console.error("[v0] POST /api/teams - Error:", error)
-    console.error("[v0] Error stack:", error instanceof Error ? error.stack : "No stack trace")
+    console.error("POST /api/teams - Error:", error)
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace")
     return NextResponse.json(
       {
         error: "Failed to create team",

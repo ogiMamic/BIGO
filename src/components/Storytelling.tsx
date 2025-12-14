@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +27,7 @@ import { useUser } from "@clerk/nextjs"
 interface Comment {
   id: string
   content: string
-  authorId: string // Added authorId for delete authorization
+  authorId: string
   author: {
     id: string
     name: string | null
@@ -43,6 +44,10 @@ interface Story {
     id: string
     name: string | null
     email: string
+  }
+  team: {
+    id: string
+    name: string
   }
   _count: {
     likes: number
@@ -255,9 +260,19 @@ export default function Storytelling() {
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <CardTitle className="text-base md:text-lg text-white truncate">{story.title}</CardTitle>
-                    <p className="text-xs md:text-sm text-gray-400 truncate">
-                      {story.author.name || story.author.email}
-                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-xs md:text-sm text-gray-400 truncate">
+                        {story.author.name || story.author.email}
+                      </p>
+                      {story.team && (
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] px-1.5 py-0 bg-green-500/20 text-green-400 border-0"
+                        >
+                          {story.team.name}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
                 {user?.id === story.author.id && (

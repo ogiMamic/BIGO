@@ -15,7 +15,6 @@ export async function GET(req: Request) {
 
     const stories = await prisma.story.findMany({
       where: {
-        organizationId: currentUser.organizationId,
         ...(teamId ? { teamId } : {}),
       },
       include: {
@@ -24,6 +23,12 @@ export async function GET(req: Request) {
             id: true,
             name: true,
             email: true,
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            name: true,
           },
         },
         _count: {
@@ -72,8 +77,7 @@ export async function POST(req: Request) {
     if (!finalTeamId) {
       const userTeam = await prisma.team.findFirst({
         where: {
-          organizationId: currentUser.organizationId,
-          ownerId: currentUser.id,
+          OR: [{ ownerId: currentUser.id }, { members: { some: { id: currentUser.id } } }],
         },
       })
 
@@ -87,7 +91,6 @@ export async function POST(req: Request) {
     if (!finalStorytellingId) {
       let storytelling = await prisma.storytelling.findFirst({
         where: {
-          organizationId: currentUser.organizationId,
           teamId: finalTeamId,
         },
       })
@@ -121,6 +124,12 @@ export async function POST(req: Request) {
             id: true,
             name: true,
             email: true,
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            name: true,
           },
         },
         _count: {

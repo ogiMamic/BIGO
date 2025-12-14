@@ -12,7 +12,6 @@ export async function GET() {
 
     const users = await prisma.user.findMany({
       where: {
-        organizationId: currentUser.organizationId,
         NOT: {
           clerkId: currentUser.clerkId,
         },
@@ -22,6 +21,12 @@ export async function GET() {
         name: true,
         email: true,
         createdAt: true,
+        teams: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",

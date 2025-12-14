@@ -26,12 +26,14 @@ export default function DashboardPage() {
       const response = await fetch("/api/teams")
       if (response.ok) {
         const teams = await response.json()
+        console.log("[v0] Teams fetched:", teams.length)
         setHasTeam(teams.length > 0)
       } else {
+        console.error("[v0] Failed to fetch teams, response not ok")
         setHasTeam(false)
       }
     } catch (error) {
-      console.error("Error checking user team:", error)
+      console.error("[v0] Error checking user team:", error)
       setHasTeam(false)
     } finally {
       setLoading(false)

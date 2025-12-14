@@ -11,11 +11,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check if team exists and is in same organization
     const team = await prisma.team.findFirst({
       where: {
         id: teamId,
-        organizationId: currentUser.organizationId,
       },
     })
 
@@ -23,7 +21,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Team not found" }, { status: 404 })
     }
 
-    // Add user to team members
     await prisma.team.update({
       where: { id: teamId },
       data: {
@@ -35,7 +32,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     return NextResponse.json({ success: true, team })
   } catch (error) {
-    console.error("[v0] POST /api/teams/[id]/join - Error:", error)
+    console.error("POST /api/teams/[id]/join - Error:", error)
     return NextResponse.json(
       {
         error: "Failed to join team",
