@@ -38,8 +38,8 @@ export default function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden" suppressHydrationWarning>
       <Sidebar />
-      <main className="flex-1 overflow-y-auto bg-gray-900 w-full">
-        <div className="md:hidden fixed top-0 right-0 z-50 p-4">
+      <main className="flex-1 overflow-y-auto bg-gray-900 w-full relative">
+        <div className="fixed top-4 right-4 z-50">
           <UserButton afterSignOutUrl="/" />
         </div>
         {children}

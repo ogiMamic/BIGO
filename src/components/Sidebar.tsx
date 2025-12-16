@@ -14,7 +14,6 @@ import {
   Menu,
   X,
 } from "lucide-react"
-import { UserButton } from "@clerk/nextjs"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -93,10 +92,6 @@ export default function Sidebar() {
             ))}
           </ul>
         </nav>
-
-        <div className="p-4 border-t border-gray-700 flex items-center justify-center flex-shrink-0">
-          <UserButton afterSignOutUrl="/" />
-        </div>
       </aside>
 
       {!isOpen && (

@@ -1,19 +1,16 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getCurrentUserWithOrg } from "@/lib/organization"
+import { getCurrentUser } from "@/lib/organization"
 
 export async function GET(req: Request) {
   try {
-    const currentUser = await getCurrentUserWithOrg()
+    const currentUser = await getCurrentUser()
 
     if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const teams = await prisma.team.findMany({
-      where: {
-        organizationId: currentUser.organizationId,
-      },
       include: {
         owner: {
           select: {
@@ -59,7 +56,7 @@ export async function POST(req: Request) {
   try {
     console.log("POST /api/teams - Starting team creation")
 
-    const currentUser = await getCurrentUserWithOrg()
+    const currentUser = await getCurrentUser()
     console.log("Current user:", currentUser ? { id: currentUser.id } : "null")
 
     if (!currentUser) {
@@ -80,14 +77,12 @@ export async function POST(req: Request) {
     console.log("Creating team with data:", {
       name,
       ownerId: currentUser.id,
-      organizationId: currentUser.organizationId,
     })
 
     const team = await prisma.team.create({
       data: {
         name,
         ownerId: currentUser.id,
-        organizationId: currentUser.organizationId,
         members: {
           connect: {
             id: currentUser.id,

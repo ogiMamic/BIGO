@@ -31,8 +31,8 @@ model User {
   isOnline          Boolean        @default(false)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
-  organization      Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId    String
+  organization      Organization?  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId    String?
   stories           Story[]
   tasks             Task[]
   messages          Message[]
@@ -71,8 +71,8 @@ model Storytelling {
   stories   Story[]
   team      Team     @relation(fields: [teamId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   teamId    String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String?
 }
 
 model Story {
@@ -87,8 +87,8 @@ model Story {
   teamId         String
   storytelling   Storytelling @relation(fields: [storytellingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   storytellingId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String?
   tasks          Task[]
   comments       Comment[]
   likes          Like[]
@@ -115,8 +115,11 @@ model Message {
   senderId  String
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   teamId    String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String?
+
+  @@index([senderId, teamId])
+  @@index([teamId, createdAt])
 }
 
 model Team {
@@ -131,8 +134,8 @@ model Team {
   stories       Story[]
   messages      Message[]
   storytellings Storytelling[]
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String?
 }
 
 model Comment {
@@ -166,8 +169,8 @@ model DirectMessage {
   senderId    String
   recipient   User     @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   recipientId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId String
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String?
 
   @@index([senderId, recipientId])
   @@index([recipientId, senderId])

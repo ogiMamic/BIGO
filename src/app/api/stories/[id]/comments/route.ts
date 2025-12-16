@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/prisma"
-import { getCurrentUserWithOrg } from "@/lib/organization"
+import { getCurrentUser } from "@/lib/organization"
 
-export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
     const { userId } = await auth()
 
@@ -11,7 +11,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
+    const { id } = params
 
     const comments = await prisma.comment.findMany({
       where: { storyId: id },
@@ -39,7 +39,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   }
 }
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
     const { userId } = await auth()
 
@@ -54,9 +54,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Content is required" }, { status: 400 })
     }
 
-    const { id } = await params
+    const { id } = params
 
-    await getCurrentUserWithOrg()
+    await getCurrentUser()
 
     const comment = await prisma.comment.create({
       data: {
